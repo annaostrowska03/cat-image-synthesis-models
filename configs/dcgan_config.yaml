@@ -1,0 +1,30 @@
+data:
+  cats_dir: data/cats          # path to Cat Dataset images
+  image_size: 64               # spatial resolution for training
+  batch_size: 64
+  num_workers: 4
+
+model:
+  z_dim: 128                   # latent noise vector dimensionality
+  g_channels: 64               # base channel width for Generator
+  d_channels: 64               # base channel width for Discriminator
+  image_channels: 3
+
+training:
+  epochs: 100
+  lr_g: 2.0e-4                 # Generator learning rate
+  lr_d: 2.0e-4                 # Discriminator learning rate
+  beta1: 0.5                   # Adam β₁
+  beta2: 0.999                 # Adam β₂
+  label_smooth_real: 0.9       # one-sided label smoothing for real samples
+  use_gradient_penalty: true   # WGAN-GP gradient penalty
+  gp_lambda: 10.0              # gradient penalty coefficient
+  n_critic: 1                  # D steps per G step
+
+logging:
+  output_dir: outputs/dcgan
+  checkpoint_dir: checkpoints/dcgan
+  save_every_epochs: 10        # save checkpoint + sample grid every N epochs
+  sample_size: 64              # number of fixed samples for monitoring
+
+seed: 42

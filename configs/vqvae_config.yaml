@@ -1,0 +1,33 @@
+data:
+  cats_dir: data/cats
+  image_size: 64
+  batch_size: 128
+  num_workers: 4
+
+model:
+  in_channels: 3
+  hidden_channels: 128         # base channels for encoder/decoder
+  embedding_dim: 64            # dimensionality of each codebook vector
+  num_embeddings: 512          # codebook size (K)
+  commitment_cost: 0.25        # β in commitment loss
+  decay: 0.99                  # EMA decay for codebook updates (0 = no EMA)
+
+prior:
+  train_prior: true            # whether to train a PixelCNN prior
+  n_layers: 15                 # PixelCNN residual layers
+  n_filters: 128               # PixelCNN filter width
+
+training:
+  epochs: 100
+  lr: 2.0e-4
+  beta1: 0.9
+  beta2: 0.999
+  recon_loss: mse              # "mse" or "l1"
+
+logging:
+  output_dir: outputs/vqvae
+  checkpoint_dir: checkpoints/vqvae
+  save_every_epochs: 10
+  sample_size: 64
+
+seed: 42

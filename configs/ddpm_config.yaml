@@ -1,0 +1,40 @@
+data:
+  cats_dir: data/cats
+  image_size: 64
+  batch_size: 64
+  num_workers: 4
+
+model:
+  image_channels: 3
+  base_channels: 128           # UNet channel width at the first level
+  channel_mults: [1, 2, 2, 2] # channel multipliers per resolution level
+  attention_resolutions: [16]  # apply self-attention at these spatial sizes
+  num_res_blocks: 2            # residual blocks per resolution level
+  dropout: 0.1
+
+diffusion:
+  timesteps: 1000              # T — total diffusion steps
+  beta_start: 1.0e-4           # β₁
+  beta_end: 0.02               # β_T
+  schedule: linear             # "linear" or "cosine"
+
+sampling:
+  use_ddim: true               # DDIM sampler (fast)
+  ddim_steps: 50               # inference steps for DDIM
+  eta: 0.0                     # 0 = deterministic DDIM
+
+training:
+  epochs: 200
+  lr: 2.0e-4
+  beta1: 0.9
+  beta2: 0.999
+  ema_decay: 0.9999            # exponential moving average of model weights
+  grad_clip: 1.0               # gradient clipping max norm
+
+logging:
+  output_dir: outputs/ddpm
+  checkpoint_dir: checkpoints/ddpm
+  save_every_epochs: 10
+  sample_size: 16              # fewer samples because DDIM sampling is still slow
+
+seed: 42

@@ -1,0 +1,39 @@
+# Data & outputs (large files)
+data/
+checkpoints/
+outputs/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Weights & logs
+*.pth
+*.pt
+*.ckpt
+wandb/
+runs/
+logs/
+.history

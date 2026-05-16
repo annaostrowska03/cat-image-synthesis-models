@@ -1,10 +1,28 @@
-# Cat Image Generation using Generative Models
+# Cat Image Synthesis with Generative Models
 
-## Project Overview
-This project, developed as part of the **Deep Learning** course (Project III) at the **Warsaw University of Technology**, explores and evaluates various generative modeling techniques for creating realistic images of cats. The primary focus is on modeling high-dimensional data distributions, optimizing generation quality, and analyzing the structure of learned latent spaces.
+This project explores and compares generative modeling approaches for cat image synthesis, including GAN-based, diffusion-based, and VQ-VAE-based methods.
 
-## Authors
-* [Anna Ostrowska](https://github.com/annaostrowska03)
+The goal was to understand how different generative architectures model image distributions, how training stability affects output quality, and how learned latent spaces can be analyzed through interpolation and reconstruction experiments.
+
+Author: [Anna Ostrowska](https://github.com/annaostrowska03)
+  
+## Models implemented
+
+- DCGAN / WGAN-GP for adversarial image generation
+- DDPM with DDIM sampling for diffusion-based generation
+- VQ-VAE with EMA codebook updates and PixelCNN prior
+
+## Evaluation and analysis
+
+The project includes:
+- generated image samples,
+- reconstruction and interpolation analysis,
+- FID-based evaluation,
+- comparison of training behavior across architectures.
+
+## Why this project matters
+
+This project helped me build a deeper understanding of modern generative modeling beyond using pretrained APIs: training dynamics, sampling, latent representations, and quantitative evaluation of generated images.
 
 ## Architectures
 The project implements and compares the following generative approaches:

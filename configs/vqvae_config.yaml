@@ -1,8 +1,8 @@
 data:
   cats_dir: data/cats
   image_size: 64
-  batch_size: 128
-  num_workers: 4
+  batch_size: 32
+  num_workers: 0
 
 model:
   in_channels: 3

@@ -1,0 +1,31 @@
+data:
+  cats_dir: data/cats
+  image_size: 64
+  batch_size: 64
+  num_workers: 0
+  augment: false
+
+model:
+  z_dim: 128
+  g_channels: 128              # doubled vs baseline (64) for more capacity
+  d_channels: 128
+  image_channels: 3
+
+training:
+  epochs: 150
+  lr_g: 2.0e-4
+  lr_d: 2.0e-4
+  beta1: 0.5
+  beta2: 0.999
+  label_smooth_real: 0.9       # active: use_gradient_penalty=false uses BCE path
+  use_gradient_penalty: false  # vanilla DCGAN: n_critic=1 gives ~21k G-steps
+  gp_lambda: 10.0
+  n_critic: 1
+
+logging:
+  output_dir: outputs/dcgan_fixed_vanilla
+  checkpoint_dir: checkpoints/dcgan_fixed_vanilla
+  save_every_epochs: 30
+  sample_size: 64
+
+seed: 42

@@ -1,0 +1,31 @@
+data:
+  cats_dir: data/cats
+  image_size: 64
+  batch_size: 64
+  num_workers: 0
+  augment: false
+
+model:
+  z_dim: 128
+  g_channels: 64
+  d_channels: 64
+  image_channels: 3
+
+training:
+  epochs: 200
+  lr_g: 4.0e-4                 # best from lr ablation
+  lr_d: 4.0e-4
+  beta1: 0.5
+  beta2: 0.999
+  label_smooth_real: 0.9
+  use_gradient_penalty: true
+  gp_lambda: 10.0
+  n_critic: 2                  # reduced from 5: ~14k G-steps vs 2800 original
+
+logging:
+  output_dir: outputs/dcgan_fixed_wgangp
+  checkpoint_dir: checkpoints/dcgan_fixed_wgangp
+  save_every_epochs: 40
+  sample_size: 64
+
+seed: 42

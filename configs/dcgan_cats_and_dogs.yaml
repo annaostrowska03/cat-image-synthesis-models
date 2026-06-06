@@ -1,0 +1,30 @@
+data:
+  cats_dir: data/cats_and_dogs/train   # flat dir: cat.*.jpg + dog.*.jpg (~25000 images)
+  image_size: 64
+  batch_size: 64
+  num_workers: 0
+
+model:
+  z_dim: 128
+  g_channels: 64
+  d_channels: 64
+  image_channels: 3
+
+training:
+  epochs: 100
+  lr_g: 2.0e-4
+  lr_d: 2.0e-4
+  beta1: 0.5
+  beta2: 0.999
+  label_smooth_real: 0.9
+  use_gradient_penalty: true
+  gp_lambda: 10.0
+  n_critic: 5
+
+logging:
+  output_dir: outputs/cats_and_dogs
+  checkpoint_dir: checkpoints/cats_and_dogs
+  save_every_epochs: 25
+  sample_size: 64
+
+seed: 42

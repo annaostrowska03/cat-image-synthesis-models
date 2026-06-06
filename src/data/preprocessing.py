@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from torch.utils.data import DataLoader, ConcatDataset
+from torch.utils.data import ConcatDataset, DataLoader
 
 from src.data.dataset import CatDataset, build_transform
 
@@ -14,9 +14,15 @@ def get_cat_loader(
     num_workers: int = 4,
     shuffle: bool = True,
     pin_memory: bool = True,
+    augment: bool = False,
 ) -> DataLoader:
-    """Return a DataLoader for the Cat Dataset."""
-    dataset = CatDataset(root=data_dir, image_size=image_size)
+    """Return a DataLoader for the Cat Dataset.
+
+    Args:
+        augment: If True, applies RandomHorizontalFlip, ColorJitter and
+                 RandomRotation during training.
+    """
+    dataset = CatDataset(root=data_dir, image_size=image_size, augment=augment)
     return DataLoader(
         dataset,
         batch_size=batch_size,

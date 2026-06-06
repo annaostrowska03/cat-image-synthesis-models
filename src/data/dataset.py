@@ -3,21 +3,58 @@
 from pathlib import Path
 from typing import Optional
 
-from PIL import Image
 import torch
+from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
 
 
-def build_transform(image_size: int = 64) -> transforms.Compose:
-    """Standard transform: center-crop to square, resize, normalize to [-1, 1]."""
-    return transforms.Compose([
-        transforms.Resize(image_size),
-        transforms.CenterCrop(image_size),
-        transforms.ToTensor(),                          # → [0, 1]
-        transforms.Normalize([0.5, 0.5, 0.5],          # → [-1, 1]
-                             [0.5, 0.5, 0.5]),
-    ])
+def build_transform(image_size: int = 64, augment: bool = False) -> transforms.Compose:
+    """Center-crop + normalize transform, optionally with data augmentation.
+
+    Args:
+        image_size: Target spatial resolution (square).
+        augment:    If True enables random augmentation:
+                    - RandomResizedCrop (scale 85–100 %)
+                    - RandomHorizontalFlip
+                    - ColorJitter (brightness/contrast/saturation/hue)
+                    - RandomGrayscale (5 % probability)
+                    - RandomRotation ±10°
+                    - RandomErasing (Cutout, 30 % probability)
+    """
+    if augment:
+        base = [
+            transforms.Resize(int(image_size * 1.1)),
+            transforms.RandomResizedCrop(
+                image_size,
+                scale=(0.85, 1.0),
+                ratio=(0.95, 1.05),
+            ),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.ColorJitter(
+                brightness=0.2,
+                contrast=0.2,
+                saturation=0.2,
+                hue=0.05,
+            ),
+            transforms.RandomGrayscale(p=0.05),
+            transforms.RandomRotation(degrees=10),
+        ]
+    else:
+        base = [
+            transforms.Resize(image_size),
+            transforms.CenterCrop(image_size),
+        ]
+
+    base += [
+        transforms.ToTensor(),
+        transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
+    ]
+    if augment:
+        base.append(
+            transforms.RandomErasing(p=0.3, scale=(0.02, 0.08), ratio=(0.5, 2.0), value=0.0)
+        )
+    return transforms.Compose(base)
 
 
 class CatDataset(Dataset):
@@ -39,10 +76,11 @@ class CatDataset(Dataset):
         self,
         root: str | Path,
         image_size: int = 64,
+        augment: bool = False,
         transform: Optional[transforms.Compose] = None,
     ) -> None:
         self.root = Path(root)
-        self.transform = transform or build_transform(image_size)
+        self.transform = transform or build_transform(image_size, augment=augment)
         self.paths = sorted(
             p for p in self.root.rglob("*") if p.suffix.lower() in self.EXTENSIONS
         )

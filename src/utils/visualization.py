@@ -10,7 +10,7 @@ import torchvision.utils as vutils
 
 
 def denormalize(tensor: torch.Tensor) -> torch.Tensor:
-    """Map [-1, 1] → [0, 1] for display."""
+    """Rescale from [-1, 1] to [0, 1] for display."""
     return (tensor.clamp(-1, 1) + 1.0) / 2.0
 
 

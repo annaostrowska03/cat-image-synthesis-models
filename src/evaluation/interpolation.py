@@ -159,7 +159,7 @@ def ddpm_interpolation(checkpoint: str, cfg: dict, out: str, device: torch.devic
     images = []
     for i in range(10):
         t = i / 9
-        z_i = lerp(z0, z1, t)
+        z_i = slerp(z0, z1, t)
         with torch.no_grad():
             img = diffusion.ddim_sample(
                 model, z_i.shape,
@@ -170,7 +170,7 @@ def ddpm_interpolation(checkpoint: str, cfg: dict, out: str, device: torch.devic
         images.append(img.squeeze(0))
 
     strip = torch.stack(images)
-    show_interpolation_strip(strip, out, title="DDPM Noise-Space Interpolation (lerp)")
+    show_interpolation_strip(strip, out, title="DDPM Noise-Space Interpolation (slerp)")
     print(f"DDPM interpolation strip saved to {out}")
 
 def main() -> None:

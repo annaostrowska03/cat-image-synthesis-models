@@ -1,0 +1,105 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# ---------------------------------------------------------------------------
+# Project metadata
+# ---------------------------------------------------------------------------
+[project]
+name = "cat-image-synthesis"
+version = "0.1.0"
+description = "Generative models (DCGAN, VQ-VAE, DDPM) for cat image synthesis"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "Anna Ostrowska" },
+]
+
+# Core runtime dependencies
+dependencies = [
+    "torch>=2.1.0",
+    "torchvision>=0.16.0",
+    "numpy>=1.24.0",
+    "Pillow>=9.0.0",
+    "matplotlib>=3.7.0",
+    "pyyaml>=6.0",
+    "tqdm>=4.65.0",
+    "torch-fidelity>=0.3.0",
+    "pandas>=2.0.0",
+    "tabulate>=0.9.0",   # required by pandas .to_markdown()
+    "kaggle>=1.5.0",
+]
+
+# Optional dependency groups
+[project.optional-dependencies]
+notebooks = [
+    "jupyter>=1.0.0",
+    "ipywidgets>=8.1.0",
+]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.4.0",
+]
+
+# Console entry points (installed modules only)
+[project.scripts]
+train-dcgan  = "src.training.train_dcgan:main"
+train-vqvae  = "src.training.train_vqvae:main"
+train-ddpm   = "src.training.train_ddpm:main"
+
+# ---------------------------------------------------------------------------
+# uv configuration
+# ---------------------------------------------------------------------------
+[tool.uv]
+# Dev dependencies (installed with `uv sync`, omitted with `uv sync --no-dev`)
+dev-dependencies = [
+    "jupyter>=1.0.0",
+    "ipywidgets>=8.1.0",
+    "ruff>=0.4.0",
+    "pytest>=8.0.0",
+]
+
+# CUDA-enabled PyTorch wheels.
+# Change cu128 to match your driver:
+#   cu118  CUDA 11.8
+#   cu121  CUDA 12.1
+#   cu124  CUDA 12.4
+#   cu128  CUDA 12.8 (current)
+#   cpu    CPU-only (no GPU)
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cu128", marker = "sys_platform != 'darwin'" },
+    { index = "pytorch-cpu",   marker = "sys_platform == 'darwin'" },
+]
+torchvision = [
+    { index = "pytorch-cu128", marker = "sys_platform != 'darwin'" },
+    { index = "pytorch-cpu",   marker = "sys_platform == 'darwin'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url  = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url  = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+# ---------------------------------------------------------------------------
+# Build configuration (which directories to package)
+# ---------------------------------------------------------------------------
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+# ---------------------------------------------------------------------------
+# Linter (ruff)
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length    = 100
+target-version = "py310"
+exclude        = ["notebooks/", "plan/", "report/", "presentation/"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]   # pycodestyle, pyflakes, isort
+ignore = ["E501"]               # line-length handled separately

@@ -15,7 +15,7 @@ The project implements and compares the following generative approaches:
 ## Dataset & Preprocessing
 * **Primary Dataset:** [Cat Dataset](https://www.kaggle.com/datasets/crawford/cat-dataset) — 9,997 images across 7 subfolders (`CAT_00`–`CAT_06`).
 * **Exploratory Extension:** [Dogs vs. Cats](https://www.kaggle.com/competitions/dogs-vs-cats/) to analyze class-specific feature separation.
-* **Preprocessing:** Images are center-cropped and resized to 64×64 (baseline) or 128×128 (best model), then normalized to `[-1, 1]`.
+* **Preprocessing:** Images are center-cropped and resized to 64×64, then normalized to `[-1, 1]`.
 
 To download the dataset:
 ```bash
@@ -34,36 +34,90 @@ src/
   utils/          seed.py, visualization.py
 notebooks/        01_data_exploration … 05_comparison_and_interpolation
 configs/          dcgan_config.yaml, vqvae_config.yaml, ddpm_config.yaml
+evaluate_all.py           # FID + interpolation for all three models
+evaluate_cats_and_dogs.py # FID experiment on mixed dataset
+ablate_dcgan.py           # DCGAN hyperparameter ablation
+ablate_ddpm_steps.py      # DDIM inference steps ablation
+```
+
+## Setup
+
+The project uses [uv](https://docs.astral.sh/uv/) for dependency management.
+
+**Install uv** (once, system-wide):
+```bash
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Install the project** (creates `.venv` automatically):
+```bash
+uv sync
+```
+
+This installs CUDA-enabled PyTorch (cu128 by default). To use a different CUDA version,
+edit the `[tool.uv.sources]` index in `pyproject.toml` (e.g. `cu121`, `cu124`, `cpu`).
+
+**Optional extras** (Jupyter notebooks):
+```bash
+uv sync --extra notebooks
 ```
 
 ## Reproducing Results
 
-Install dependencies:
+**Download data** (Kaggle API required):
 ```bash
-pip install -r requirements.txt
+uv run python -m kaggle datasets download crawford/cat-dataset -p data/ --unzip
 ```
 
-Train models (run in order):
+**Train models** (run in order):
 ```bash
-python -m src.training.train_dcgan
-python -m src.training.train_vqvae
-python -m src.training.train_ddpm
+uv run train-dcgan
+uv run train-vqvae
+uv run train-ddpm
 ```
 
-Each script is config-driven — override hyperparameters from the CLI, e.g.:
+Each script is config-driven — override hyperparameters from the CLI:
 ```bash
-python -m src.training.train_dcgan --z_dim 64 --lr_g 1e-4
-python -m src.training.train_ddpm  --timesteps 500 --base_channels 64
+uv run train-dcgan --z_dim 64 --lr_g 1e-4
+uv run train-ddpm  --timesteps 500 --base_channels 64
 ```
 
 Checkpoints are saved to `checkpoints/<model>/` and sample grids to `outputs/<model>/` every 10 epochs.
 
-Compute FID and latent interpolation after training:
+**Run full evaluation** (FID + interpolation for all models):
 ```bash
-python -m src.evaluation.interpolation --model dcgan \
-    --checkpoint checkpoints/dcgan/ckpt_epoch0100.pt \
-    --config configs/dcgan_config.yaml
+uv run python evaluate_all.py
 ```
+
+**Run ablation studies**:
+```bash
+uv run python ablate_dcgan.py
+uv run python ablate_ddpm_steps.py
+uv run python evaluate_cats_and_dogs.py
+```
+
+**Open notebooks**:
+```bash
+uv run jupyter notebook
+```
+
+## Results
+
+| Model | FID ↓ | Notes |
+|---|---|---|
+| DCGAN (WGAN-GP) | 221.51 | z_dim=128, 100 epochs |
+| VQ-VAE + PixelCNN | 187.54 | K=512, D=64, 100+100 epochs |
+| **DDPM (DDIM 50 steps)** | **24.36** | T=1000, 200 epochs, EMA |
+
+DDPM achieves substantially lower FID, consistent with the diffusion models literature. Key ablation findings:
+- **DDIM steps** (DDPM): FID drops from 66.92 (10 steps) to 39.81 (200 steps); 50 steps (FID 54.51) is the practical trade-off.
+- **Latent dim** (DCGAN): z_dim ∈ {64, 128, 256} differs by <5 FID points — 64-dim noise suffices at 64×64.
+- **Learning rate** (DCGAN): lr=4e-4 gives best FID (172.51); lr=1e-4 lags by +46 points.
+- **Cats+Dogs dataset**: mixed DCGAN achieves FID 206.57 vs cats and 197.79 vs dogs, beating the cats-only baseline (221.51).
 
 ## Experiments
 We systematically investigate the following factors:

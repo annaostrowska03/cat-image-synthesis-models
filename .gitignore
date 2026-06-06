@@ -16,7 +16,7 @@ build/
 .ipynb_checkpoints/
 *.ipynb_checkpoints
 
-# Virtual environments
+# Virtual environments (uv creates .venv by default)
 .venv/
 venv/
 env/
@@ -37,3 +37,21 @@ wandb/
 runs/
 logs/
 .history
+
+# Build artefacts
+*.dist-info/
+compile_out.txt
+
+# LaTeX files
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.log
+*.nav
+*.out
+*.run.xml
+*.snm
+*.synctex.gz
+*.toc
+texput.log

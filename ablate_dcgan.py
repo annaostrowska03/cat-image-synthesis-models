@@ -34,13 +34,13 @@ if not Path(REAL_DIR).exists():
     )
 
 CONFIGS = [
-    ("z_dim=64",        "configs/dcgan_ablation_zdim64.yaml"),
-    ("z_dim=128 (base)","configs/dcgan_ablation_zdim128_base.yaml"),
-    ("z_dim=256",       "configs/dcgan_ablation_zdim256.yaml"),
-    ("lr=1e-4",         "configs/dcgan_ablation_lr1e4.yaml"),
-    ("lr=2e-4 (base)",  "configs/dcgan_ablation_lr2e4_base.yaml"),
-    ("lr=4e-4",         "configs/dcgan_ablation_lr4e4.yaml"),
-    ("augmented",       "configs/dcgan_ablation_augmented.yaml"),
+    ("z_dim=64", "configs/dcgan_ablation_zdim64.yaml"),
+    ("z_dim=128 (base)", "configs/dcgan_ablation_zdim128_base.yaml"),
+    ("z_dim=256", "configs/dcgan_ablation_zdim256.yaml"),
+    ("lr=1e-4", "configs/dcgan_ablation_lr1e4.yaml"),
+    ("lr=2e-4 (base)", "configs/dcgan_ablation_lr2e4_base.yaml"),
+    ("lr=4e-4", "configs/dcgan_ablation_lr4e4.yaml"),
+    ("augmented", "configs/dcgan_ablation_augmented.yaml"),
 ]
 
 def load_yaml(path: str) -> dict:

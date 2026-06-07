@@ -25,15 +25,15 @@ from src.evaluation.fid import compute_fid, save_real_samples, save_samples
 from src.models.dcgan import Generator
 from src.utils.seed import set_seed
 
-CHECKPOINT  = "checkpoints/cats_and_dogs/ckpt_epoch0100.pt"
-TRAIN_DIR   = Path("data/cats_and_dogs/train")
-REAL_CATS   = Path("outputs/real_64")
-REAL_DOGS   = Path("outputs/real_dogs_64")
-FAKE_DIR    = Path("outputs/cats_and_dogs/fid_samples")
+CHECKPOINT = "checkpoints/cats_and_dogs/ckpt_epoch0100.pt"
+TRAIN_DIR = Path("data/cats_and_dogs/train")
+REAL_CATS = Path("outputs/real_64")
+REAL_DOGS = Path("outputs/real_dogs_64")
+FAKE_DIR = Path("outputs/cats_and_dogs/fid_samples")
 RESULTS_FILE = Path("outputs/cats_and_dogs/fid_results.json")
 
-N_REAL  = 5000
-N_FAKE  = 5000
+N_REAL = 5000
+N_FAKE = 5000
 IMAGE_SIZE = 64
 BATCH = 64
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")

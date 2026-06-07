@@ -33,7 +33,7 @@ for _required in [REAL_DIR, CHECKPOINT, CONFIG]:
 
 DDIM_STEPS_LIST = [10, 25, 50, 100, 200]
 N_SAMPLES = 5000
-BATCH_SIZE = 16   # keep at 16 for 6 GB VRAM
+BATCH_SIZE = 16  # keep at 16 for 6 GB VRAM
 
 def load_yaml(path: str) -> dict:
     with open(path, encoding="utf-8") as f:

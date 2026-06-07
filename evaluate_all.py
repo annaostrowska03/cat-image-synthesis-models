@@ -174,11 +174,11 @@ def run_interpolations(dcgan_cfg: str, vqvae_cfg: str, ddpm_cfg: str) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Full evaluation: FID + interpolation.")
-    parser.add_argument("--dcgan_cfg",  default="configs/dcgan_config.yaml")
-    parser.add_argument("--vqvae_cfg",  default="configs/vqvae_config.yaml")
-    parser.add_argument("--ddpm_cfg",   default="configs/ddpm_config.yaml")
-    parser.add_argument("--real_dir",   default="outputs/real_64")
-    parser.add_argument("--n_fid",      type=int, default=5000,
+    parser.add_argument("--dcgan_cfg", default="configs/dcgan_config.yaml")
+    parser.add_argument("--vqvae_cfg", default="configs/vqvae_config.yaml")
+    parser.add_argument("--ddpm_cfg", default="configs/ddpm_config.yaml")
+    parser.add_argument("--real_dir", default="outputs/real_64")
+    parser.add_argument("--n_fid", type=int, default=5000,
                         help="Number of generated samples for FID (real set uses same count).")
     args = parser.parse_args()
 

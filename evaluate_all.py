@@ -87,8 +87,9 @@ def eval_vqvae(cfg_path: str, real_dir: str, n_fid: int) -> float:
         decay=mc["decay"],
     ).to(DEVICE)
     ckpt_dir = Path(cfg["logging"]["checkpoint_dir"])
-    ae_epochs = cfg["training"]["ae_epochs"]
-    prior_epochs = cfg["training"]["prior_epochs"]
+    tc = cfg["training"]
+    ae_epochs = tc.get("ae_epochs", tc["epochs"])
+    prior_epochs = tc.get("prior_epochs", tc["epochs"])
     vqvae.load_state_dict(
         torch.load(ckpt_dir / f"vqvae_epoch{ae_epochs:04d}.pt", map_location=DEVICE)["model"]
     )
@@ -110,7 +111,7 @@ def eval_vqvae(cfg_path: str, real_dir: str, n_fid: int) -> float:
     return compute_fid(real_dir, str(fake_dir))
 
 
-def eval_ddpm(cfg_path: str, real_dir: str, n_fid: int) -> float:
+def eval_ddpm(cfg_path: str, real_dir: str, n_fid: int, use_ema: bool = True) -> float:
     from src.models.ddpm import GaussianDiffusion, UNet
 
     cfg = load_yaml(cfg_path)
@@ -129,7 +130,14 @@ def eval_ddpm(cfg_path: str, real_dir: str, n_fid: int) -> float:
     ckpt_dir = Path(cfg["logging"]["checkpoint_dir"])
     epochs = cfg["training"]["epochs"]
     ckpt = ckpt_dir / f"ddpm_epoch{epochs:04d}.pt"
-    model.load_state_dict(torch.load(ckpt, map_location=DEVICE)["model"])
+    state = torch.load(ckpt, map_location=DEVICE)
+    model.load_state_dict(state["model"])
+    if use_ema and "ema_shadow" in state:
+        shadow = state["ema_shadow"]
+        with torch.no_grad():
+            for name, param in model.named_parameters():
+                if param.requires_grad and name in shadow:
+                    param.data.copy_(shadow[name])
 
     diffusion = GaussianDiffusion(
         timesteps=dc["timesteps"],
@@ -154,9 +162,12 @@ def run_interpolations(dcgan_cfg: str, vqvae_cfg: str, ddpm_cfg: str) -> None:
 
     cfg = load_yaml(vqvae_cfg)
     ckpt_dir = Path(cfg["logging"]["checkpoint_dir"])
+    _tc = cfg["training"]
+    _ae = _tc.get("ae_epochs", _tc["epochs"])
+    _pr = _tc.get("prior_epochs", _tc["epochs"])
     vqvae_interpolation(
-        str(ckpt_dir / f"vqvae_epoch{cfg['training']['ae_epochs']:04d}.pt"),
-        str(ckpt_dir / f"prior_epoch{cfg['training']['prior_epochs']:04d}.pt"),
+        str(ckpt_dir / f"vqvae_epoch{_ae:04d}.pt"),
+        str(ckpt_dir / f"prior_epoch{_pr:04d}.pt"),
         cfg,
         str(Path(cfg["logging"]["output_dir"]) / "interpolation.png"),
         DEVICE,
@@ -180,6 +191,8 @@ def main() -> None:
     parser.add_argument("--real_dir", default="outputs/real_64")
     parser.add_argument("--n_fid", type=int, default=5000,
                         help="Number of generated samples for FID (real set uses same count).")
+    parser.add_argument("--no_ema", action="store_true",
+                        help="Load raw model weights instead of EMA shadow for DDPM.")
     args = parser.parse_args()
 
     print(f"Device: {DEVICE}  |  n_fid={args.n_fid}\n")
@@ -196,7 +209,7 @@ def main() -> None:
     print(f"VQ-VAE FID: {fid_vqvae:.4f}")
 
     print("\nDDPM: generating FID samples (slow) ...")
-    fid_ddpm = eval_ddpm(args.ddpm_cfg, args.real_dir, args.n_fid)
+    fid_ddpm = eval_ddpm(args.ddpm_cfg, args.real_dir, args.n_fid, use_ema=not args.no_ema)
     print(f"DDPM FID: {fid_ddpm:.4f}")
 
     print("\nLatent interpolations ...")

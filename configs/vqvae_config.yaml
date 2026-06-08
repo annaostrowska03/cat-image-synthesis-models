@@ -18,7 +18,9 @@ prior:
   n_filters: 128               # PixelCNN filter width
 
 training:
-  epochs: 100
+  ae_epochs: 100
+  prior_epochs: 100
+  epochs: 100        # kept for backward compatibility; ae_epochs/prior_epochs take precedence
   lr: 2.0e-4
   beta1: 0.9
   beta2: 0.999

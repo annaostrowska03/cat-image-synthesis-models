@@ -1,4 +1,4 @@
-"""Cat image dataset — handles multi-resolution images."""
+"""Cat image dataset: handles multi-resolution images."""
 
 from pathlib import Path
 from typing import Optional
@@ -15,7 +15,7 @@ def build_transform(image_size: int = 64, augment: bool = False) -> transforms.C
     Args:
         image_size: Target spatial resolution (square).
         augment:    If True enables random augmentation:
-                    - RandomResizedCrop (scale 85–100 %)
+                    - RandomResizedCrop (scale 85-100 %)
                     - RandomHorizontalFlip
                     - ColorJitter (brightness/contrast/saturation/hue)
                     - RandomGrayscale (5 % probability)

@@ -44,7 +44,7 @@ def get_cats_and_dogs_loader(
     """Return a DataLoader for a merged cats + dogs dataset.
 
     Both splits use the same transform (center-crop + normalize).
-    Labels are intentionally discarded — this is an unconditional generative task.
+    Labels are intentionally discarded; this is an unconditional generative task.
     """
     transform = build_transform(image_size)
     cats = CatDataset(root=cats_dir, image_size=image_size, transform=transform)

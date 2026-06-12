@@ -31,7 +31,7 @@ The project implements and compares the following generative approaches:
 * **Variational Autoencoders (VAEs):** VQ-VAE with EMA codebook updates and a PixelCNN autoregressive prior.
 
 ## Dataset & Preprocessing
-* **Primary Dataset:** [Cat Dataset](https://www.kaggle.com/datasets/crawford/cat-dataset) — 9,997 images across 7 subfolders (`CAT_00`–`CAT_06`).
+* **Primary Dataset:** [Cat Dataset](https://www.kaggle.com/datasets/crawford/cat-dataset): 9,997 images across 7 subfolders (`CAT_00`-`CAT_06`).
 * **Exploratory Extension:** [Dogs vs. Cats](https://www.kaggle.com/competitions/dogs-vs-cats/) to analyze class-specific feature separation.
 * **Preprocessing:** Images are center-cropped and resized to 64×64, then normalized to `[-1, 1]`.
 
@@ -98,7 +98,7 @@ uv run train-vqvae
 uv run train-ddpm
 ```
 
-Each script is config-driven — override hyperparameters from the CLI:
+Each script is config-driven; override hyperparameters from the CLI:
 ```bash
 uv run train-dcgan --z_dim 64 --lr_g 1e-4
 uv run train-ddpm  --timesteps 500 --base_channels 64
@@ -131,17 +131,17 @@ uv run jupyter notebook
 | VQ-VAE + PixelCNN | 187.54 | K=512, D=64, 100+100 epochs |
 | **DDPM (DDIM 50 steps)** | **24.36** | T=1000, 200 epochs, EMA |
 
-DDPM achieves substantially lower FID, consistent with the diffusion models literature. Key ablation findings:
-- **DDIM steps** (DDPM): FID drops from 66.92 (10 steps) to 39.81 (200 steps); 50 steps (FID 54.51) is the practical trade-off.
-- **Latent dim** (DCGAN): z_dim ∈ {64, 128, 256} differs by <5 FID points — 64-dim noise suffices at 64×64.
-- **Learning rate** (DCGAN): lr=4e-4 gives best FID (172.51); lr=1e-4 lags by +46 points.
+DDPM achieves substantially lower FID, consistent with the diffusion models literature. Key ablation findings (DCGAN ablations are 3-seed mean ± std):
+- **DDIM steps** (DDPM): FID drops from 66.92 (10 steps) to 39.81 (200 steps); 50 steps (FID 54.51 without EMA, 24.36 with EMA) is the practical trade-off.
+- **Latent dim** (DCGAN): z_dim=64 gives best mean FID (246.65 ± 5.57) vs baseline z_dim=128 (264.25 ± 20.21); z_dim=256 is equivalent to baseline. Baseline has high seed variance.
+- **Learning rate** (DCGAN): lr=4e-4 gives best mean FID (220.05 ± 4.47, −44 pts vs baseline); lr=1e-4 is worst (295.11 ± 18.27).
 - **Cats+Dogs dataset**: mixed DCGAN achieves FID 206.57 vs cats and 197.79 vs dogs, beating the cats-only baseline (221.51).
 
 ## Experiments
 We systematically investigate the following factors:
 1. **Architecture Depth:** Impact of the number of layers and latent noise vector z dimensionality.
 2. **Optimization:** Testing various learning rates and Adam optimizer configurations (beta_1, beta_2).
-3. **Stability:** Techniques to prevent mode collapse — label smoothing (DCGAN), WGAN-GP gradient penalty, EMA weights (DDPM).
+3. **Stability:** Techniques to prevent mode collapse: label smoothing (DCGAN), WGAN-GP gradient penalty, EMA weights (DDPM).
 4. **Dataset Complexity:** Comparing models trained on cats only versus a mixed cats and dogs dataset.
 
 ## Evaluation Metrics
@@ -153,4 +153,4 @@ Model performance is assessed through:
 ## Implementation Notes
 * All experiments use `SEED=42` (set globally via `src/utils/seed.py`) for reproducibility.
 * Windows users: use `num_workers=0` in DataLoaders when running in interactive/notebook sessions.
-* YAML configs must be opened with UTF-8 encoding — handled automatically by the training scripts.
+* YAML configs must be opened with UTF-8 encoding; this is handled automatically by the training scripts.

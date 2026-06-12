@@ -75,7 +75,8 @@ def train(cfg: dict) -> None:
     g_losses, d_losses = [], []
 
     for epoch in range(1, tc["epochs"] + 1):
-        G.train(); D.train()
+        G.train()
+        D.train()
         epoch_g, epoch_d = 0.0, 0.0
 
         data_iter = iter(loader)

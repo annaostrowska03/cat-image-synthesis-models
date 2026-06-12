@@ -1,4 +1,4 @@
-"""DDPM — Denoising Diffusion Probabilistic Model.
+"""DDPM: Denoising Diffusion Probabilistic Model.
 
 Implements:
 - Linear (and cosine) noise schedule
@@ -33,7 +33,7 @@ class GaussianDiffusion:
     forward-process sampling and loss computation.
 
     Args:
-        timesteps: T — total diffusion steps.
+        timesteps: T, total diffusion steps.
         beta_start / beta_end: Endpoints of the linear schedule.
         schedule:  "linear" or "cosine".
         device:    Buffers are stored on this device.

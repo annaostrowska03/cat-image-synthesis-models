@@ -153,7 +153,7 @@ def train_prior(cfg: dict, vqvae: VQVAE, device: torch.device) -> PixelCNN:
                 sampled_indices = prior.sample((B, H_z, W_z), device=device)
                 samples = vqvae.decode_indices(sampled_indices)
             save_image_grid(samples, out_dir / f"prior_samples_epoch{epoch:04d}.png",
-                            title=f"PixelCNN samples — Epoch {epoch}")
+                            title=f"PixelCNN samples, Epoch {epoch}")
             torch.save(
                 {"epoch": epoch, "prior": prior.state_dict()},
                 Path(lc["checkpoint_dir"]) / f"prior_epoch{epoch:04d}.pt",

@@ -142,6 +142,12 @@ def ddpm_interpolation(checkpoint: str, cfg: dict, out: str, device: torch.devic
     ).to(device)
     state = torch.load(checkpoint, map_location=device)
     model.load_state_dict(state["model"])
+    if "ema_shadow" in state:
+        shadow = state["ema_shadow"]
+        with torch.no_grad():
+            for name, param in model.named_parameters():
+                if param.requires_grad and name in shadow:
+                    param.data.copy_(shadow[name])
     model.eval()
 
     diffusion = GaussianDiffusion(

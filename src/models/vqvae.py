@@ -14,7 +14,7 @@ class VectorQuantizer(nn.Module):
     Args:
         num_embeddings: Codebook size K.
         embedding_dim:  Dimensionality of each codebook vector.
-        commitment_cost: β — weight of the commitment loss term.
+        commitment_cost: beta, weight of the commitment loss term.
         decay:          EMA decay rate for codebook updates.  Set to 0 to
                         use the original straight-through gradient instead.
     """

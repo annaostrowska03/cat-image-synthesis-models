@@ -86,7 +86,7 @@ def main() -> None:
     if Path(RESULTS_FILE).exists():
         with open(RESULTS_FILE, encoding="utf-8") as f:
             results = json.load(f)
-        print(f"Resumed — {sum(len(v['fids']) for v in results.values())} "
+        print(f"Resumed: {sum(len(v['fids']) for v in results.values())} "
               f"runs already done.\n", flush=True)
 
     print(f"Device: {DEVICE}   Seeds: {SEEDS}\n", flush=True)

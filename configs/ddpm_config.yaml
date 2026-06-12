@@ -13,7 +13,7 @@ model:
   dropout: 0.1
 
 diffusion:
-  timesteps: 1000              # T — total diffusion steps
+  timesteps: 1000              # T: total diffusion steps
   beta_start: 1.0e-4           # β₁
   beta_end: 0.02               # β_T
   schedule: linear             # "linear" or "cosine"

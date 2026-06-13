@@ -54,8 +54,9 @@ def train_autoencoder(cfg: dict, device: torch.device) -> VQVAE:
 
     recon_fn = F.mse_loss if tc.get("recon_loss", "mse") == "mse" else F.l1_loss
     recon_losses, vq_losses = [], []
+    ae_epochs = tc.get("ae_epochs", tc["epochs"])
 
-    for epoch in range(1, tc["epochs"] + 1):
+    for epoch in range(1, ae_epochs + 1):
         model.train()
         ep_recon, ep_vq = 0.0, 0.0
 
@@ -75,12 +76,12 @@ def train_autoencoder(cfg: dict, device: torch.device) -> VQVAE:
         vq_losses.append(ep_vq / n)
         perplexity = model.vq.perplexity_last
         print(
-            f"Epoch [{epoch:>4}/{tc['epochs']}]  "
+            f"Epoch [{epoch:>4}/{ae_epochs}]  "
             f"Recon: {recon_losses[-1]:.4f}  VQ: {vq_losses[-1]:.4f}  "
             f"Perplexity: {perplexity:.1f}"
         )
 
-        if epoch % lc["save_every_epochs"] == 0 or epoch == tc["epochs"]:
+        if epoch % lc["save_every_epochs"] == 0 or epoch == ae_epochs:
             model.eval()
             with torch.no_grad():
                 sample_real = next(iter(loader))[:lc["sample_size"]].to(device)
@@ -128,8 +129,9 @@ def train_prior(cfg: dict, vqvae: VQVAE, device: torch.device) -> PixelCNN:
     out_dir = Path(lc["output_dir"])
     prior_losses = []
 
+    prior_epochs = tc.get("prior_epochs", tc["epochs"])
     print("Training PixelCNN prior...")
-    for epoch in range(1, tc["epochs"] + 1):
+    for epoch in range(1, prior_epochs + 1):
         prior.train()
         ep_loss = 0.0
         for real in loader:
@@ -144,9 +146,9 @@ def train_prior(cfg: dict, vqvae: VQVAE, device: torch.device) -> PixelCNN:
             ep_loss += loss.item()
 
         prior_losses.append(ep_loss / len(loader))
-        print(f"PixelCNN Epoch [{epoch:>4}/{tc['epochs']}]  Loss: {prior_losses[-1]:.4f}")
+        print(f"PixelCNN Epoch [{epoch:>4}/{prior_epochs}]  Loss: {prior_losses[-1]:.4f}")
 
-        if epoch % lc["save_every_epochs"] == 0 or epoch == tc["epochs"]:
+        if epoch % lc["save_every_epochs"] == 0 or epoch == prior_epochs:
             prior.eval()
             with torch.no_grad():
                 B, H_z, W_z = lc["sample_size"], indices.shape[1], indices.shape[2]

@@ -16,6 +16,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
 
 import torch
 import yaml
@@ -78,11 +79,16 @@ def dcgan_interpolation(checkpoint: str, cfg: dict, out: str, device: torch.devi
     G.load_state_dict(state["G"])
     G.eval()
 
+    torch.manual_seed(0)
     z0 = torch.randn(1, mc["z_dim"], device=device)
     z1 = torch.randn(1, mc["z_dim"], device=device)
     strip = interpolation_strip(z0, z1, lambda z: G(z), use_slerp=True)
     show_interpolation_strip(strip, out, title="DCGAN Latent Interpolation (slerp)")
+    latent_path = Path(out).with_name("interpolation_latents.pt")
+    torch.save({"z0": z0.cpu(), "z1": z1.cpu(), "seed": 0,
+                "z_dim": mc["z_dim"], "method": "slerp"}, latent_path)
     print(f"DCGAN interpolation strip saved to {out}")
+    print(f"Latent vectors saved to {latent_path}")
 
 def vqvae_interpolation(checkpoint: str, prior_ckpt: str | None, cfg: dict, out: str, device: torch.device) -> None:
     from src.models.vqvae import VQVAE, PixelCNN
@@ -159,6 +165,7 @@ def ddpm_interpolation(checkpoint: str, cfg: dict, out: str, device: torch.devic
     )
 
     img_size = cfg["data"]["image_size"]
+    torch.manual_seed(0)
     z0 = torch.randn(1, mc["image_channels"], img_size, img_size, device=device)
     z1 = torch.randn(1, mc["image_channels"], img_size, img_size, device=device)
 
@@ -177,7 +184,11 @@ def ddpm_interpolation(checkpoint: str, cfg: dict, out: str, device: torch.devic
 
     strip = torch.stack(images)
     show_interpolation_strip(strip, out, title="DDPM Noise-Space Interpolation (slerp)")
+    latent_path = Path(out).with_name("interpolation_latents.pt")
+    torch.save({"z0": z0.cpu(), "z1": z1.cpu(), "seed": 0,
+                "shape": list(z0.shape), "method": "slerp"}, latent_path)
     print(f"DDPM interpolation strip saved to {out}")
+    print(f"Latent tensors saved to {latent_path}")
 
 def main() -> None:
     parser = argparse.ArgumentParser()

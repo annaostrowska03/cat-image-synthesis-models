@@ -423,7 +423,7 @@
 %
 \section{Cats and Dogs Experiment}
 %
-\begin{frame}[shrink=5]{Does Training on Dogs Help Cats?}
+\begin{frame}[shrink=18]{Does Training on Dogs Help Cats?}
   \begin{columns}[T]
     \begin{column}{0.52\textwidth}
       \textbf{Setup}
@@ -433,9 +433,9 @@
         \item FID measured separately vs. cats and dogs
       \end{itemize}
 
-      \vspace{6pt}
+      \vspace{4pt}
       \begin{block}{Results}
-        \centering\vspace{3pt}
+        \centering\vspace{2pt}
         \begin{tabular}{lccc}
           \toprule
           Model & vs. Cats & vs. Dogs & vs. Combined \\
@@ -443,19 +443,17 @@
           Cats only  & 221.51 & - & - \\
           \textbf{Cats+Dogs} & 206.57 & 197.79 & \textbf{190.39} \\
           \bottomrule
-        \end{tabular}\vspace{3pt}
+        \end{tabular}\vspace{2pt}
       \end{block}
 
-      \vspace{4pt}
-      \small Combined FID (2\,500 cats + 2\,500 dogs) is more appropriate
+      \vspace{3pt}
+      \small Combined FID (2\,500 cats + 2\,500 dogs) more appropriate
       for a mixed-class model. 15-pt cat improvement is within
       seed variance ($\pm20$) --- suggestive, not conclusive.
 
-      \vspace{4pt}
-      \textbf{Qualitative:} samples show a mix --- some clearly cat-like
-      (round face, pointed ears), some dog-like (longer snout), many
-      ambiguous dark quadruped silhouettes.
-      No collapse to one class; model captures shared fur/eye features
+      \vspace{3pt}
+      \textbf{Qualitative:} mix of cat-like and dog-like samples;
+      no collapse to one class. Model captures shared fur/eye features
       without cleanly separating species.
     \end{column}
     \begin{column}{0.45\textwidth}
@@ -505,10 +503,11 @@
       \end{block}
     \end{column}
     \begin{column}{0.45\textwidth}
-      \includegraphics[width=\linewidth]{dcgan_fixed_vanilla/samples_epoch0150.png}
-      \centering\footnotesize Std.\ DCGAN (epoch 150)\\[4pt]
-      \includegraphics[width=\linewidth]{dcgan_fixed_wgangp/samples_epoch0200.png}
-      \centering\footnotesize WGAN-GP $n_c=2$ (epoch 200)
+      \centering
+      \includegraphics[width=\linewidth,height=0.38\textheight,keepaspectratio]{dcgan_fixed_vanilla/samples_epoch0150.png}\\[2pt]
+      \footnotesize Std.\ DCGAN (epoch 150)\\[6pt]
+      \includegraphics[width=\linewidth,height=0.38\textheight,keepaspectratio]{dcgan_fixed_wgangp/samples_epoch0200.png}\\[2pt]
+      \footnotesize WGAN-GP $n_c=2$ (epoch 200)
     \end{column}
   \end{columns}
 \end{frame}

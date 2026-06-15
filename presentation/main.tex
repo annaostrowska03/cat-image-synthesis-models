@@ -314,26 +314,6 @@
   \includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{real_vs_generated.png}
 \end{frame}
 
-\begin{frame}[shrink=12]{Training Dynamics}
-  \begin{columns}[T]
-    \begin{column}{0.48\textwidth}\centering
-      \includegraphics[width=\linewidth,height=0.38\textheight,keepaspectratio]{dcgan/losses.png}\\[2pt]
-      DCGAN (G vs.\ D) --- adversarial oscillation
-    \end{column}
-    \begin{column}{0.48\textwidth}\centering
-      \includegraphics[width=\linewidth,height=0.38\textheight,keepaspectratio]{vqvae/losses.png}\\[2pt]
-      VQ-VAE (recon + VQ) --- steady decrease
-    \end{column}
-  \end{columns}
-  \vspace{4pt}
-  \begin{center}
-    \includegraphics[width=0.48\textwidth,height=0.38\textheight,keepaspectratio]{ddpm/losses.png}\\[2pt]
-    DDPM ($\ell_2$ noise) --- smooth convergence, most stable
-  \end{center}
-  \vspace{3pt}
-  \small DDPM's MSE objective gives the most stable training.
-  DCGAN shows adversarial oscillation; VQ-VAE converges reliably with EMA codebook.
-\end{frame}
 
 \begin{frame}[shrink=8]{Latent Space Interpolation: Linear vs.\ Slerp}
   \centering
@@ -358,46 +338,10 @@
   MSE $= 0.0066$ \quad|\quad VQ loss $= 0.0033$ \quad|\quad perplexity $403/512$ (79\%)
 \end{frame}
 
-\begin{frame}{DCGAN Training Progression}
-  \centering
-  \includegraphics[width=\textwidth,height=0.78\textheight,keepaspectratio]{dcgan_progression.png}\\[3pt]
-  \small From blurry noise to recognisable cats --- but likely limited by low generator update budget (3\,100 G-steps at $n_c{=}5$).
-\end{frame}
 
 %
 \section{Ablation Studies}
 %
-\begin{frame}[shrink=5]{Experimental Grid: What We Tested}
-\small
-  \begin{tabular}{llll}
-    \toprule
-    \textbf{Model} & \textbf{Ablation / variant} & \textbf{Values tested} & \textbf{Metric} \\
-    \midrule
-    \multirow{4}{*}{DCGAN}
-      & Latent dim $z_\text{dim}$   & 64, \textbf{128}, 256              & FID, slerp smoothness \\
-      & Learning rate               & 1e-4, \textbf{2e-4}, 4e-4          & FID \\
-      & Augmentation                & off (\textbf{base}), on            & FID \\
-      & Training data               & cats only, \textbf{cats+dogs}       & FID vs cats/dogs \\
-    \midrule
-    \multirow{2}{*}{DDPM}
-      & DDIM steps                  & 10, 25, \textbf{50}, 100, 200      & FID, wall time \\
-      & EMA weights                 & off, \textbf{on} (decay 0.9999)    & FID \\
-    \midrule
-    VQ-VAE
-      & Codebook size $K$           & 1024 (collapsed) $\to$ \textbf{512}   & perplexity, FID \\
-    \midrule
-    \multirow{2}{*}{Post-hoc fix}
-      & Standard DCGAN ($n_c=1$)    & 150 ep, $g_\text{ch}=128$          & FID \\
-      & WGAN-GP $n_c=2$             & 200 ep                              & FID \\
-    \bottomrule
-  \end{tabular}
-  \vspace{5pt}
-
-  \textbf{Bold} = chosen baseline.
-  Primary metric: FID on 5\,000 generated vs 5\,000 real images.
-  Secondary: latent interpolation smoothness, reconstruction MSE (VQ-VAE).
-\end{frame}
-
 \begin{frame}{DDPM: DDIM Steps and EMA Effect}
 \small
   \begin{columns}[T]
@@ -475,17 +419,6 @@
   \end{columns}
 \end{frame}
 
-\begin{frame}[shrink=5]{Latent Space Smoothness vs. $z_\text{dim}$}
-  \centering
-  \includegraphics[width=\textwidth,height=0.20\textheight,keepaspectratio]{ablation/interp_zdim64.png}\\
-  \small $z_\text{dim}=64$\\[3pt]
-  \includegraphics[width=\textwidth,height=0.20\textheight,keepaspectratio]{ablation/interp_zdim128.png}\\
-  \small $z_\text{dim}=128$ (baseline)\\[3pt]
-  \includegraphics[width=\textwidth,height=0.20\textheight,keepaspectratio]{ablation/interp_zdim256.png}\\
-  \small $z_\text{dim}=256$\\[4pt]
-  Slerp, 10 frames. Transitions smooth for all variants.
-  $z_{64}$ slightly softer; $z_{128}$ and $z_{256}$ indistinguishable.
-\end{frame}
 
 %
 \section{Cats and Dogs Experiment}
@@ -580,11 +513,6 @@
   \end{columns}
 \end{frame}
 
-\begin{frame}[shrink=5]{Quality vs.\ Compute Trade-off}
-  \centering
-  \includegraphics[width=0.88\textwidth,height=0.80\textheight,keepaspectratio]{compute_quality.png}\\[2pt]
-  \small DDPM dominates in quality; DCGAN fastest. Fixed DCGAN closes the gap significantly.
-\end{frame}
 
 %
 \section{Research Questions}
@@ -679,6 +607,85 @@
       June 2026}
   \end{center}
   \vfill
+\end{frame}
+
+
+\appendix
+
+\begin{frame}[shrink=12]{Training Dynamics}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}\centering
+      \includegraphics[width=\linewidth,height=0.38\textheight,keepaspectratio]{dcgan/losses.png}\\[2pt]
+      DCGAN (G vs.\ D) --- adversarial oscillation
+    \end{column}
+    \begin{column}{0.48\textwidth}\centering
+      \includegraphics[width=\linewidth,height=0.38\textheight,keepaspectratio]{vqvae/losses.png}\\[2pt]
+      VQ-VAE (recon + VQ) --- steady decrease
+    \end{column}
+  \end{columns}
+  \vspace{4pt}
+  \begin{center}
+    \includegraphics[width=0.48\textwidth,height=0.38\textheight,keepaspectratio]{ddpm/losses.png}\\[2pt]
+    DDPM ($\ell_2$ noise) --- smooth convergence, most stable
+  \end{center}
+  \vspace{3pt}
+  \small DDPM's MSE objective gives the most stable training.
+  DCGAN shows adversarial oscillation; VQ-VAE converges reliably with EMA codebook.
+\end{frame}
+
+\begin{frame}{DCGAN Training Progression}
+  \centering
+  \includegraphics[width=\textwidth,height=0.78\textheight,keepaspectratio]{dcgan_progression.png}\\[3pt]
+  \small From blurry noise to recognisable cats --- but likely limited by low generator update budget (3\,100 G-steps at $n_c{=}5$).
+\end{frame}
+
+\begin{frame}[shrink=5]{Experimental Grid: What We Tested}
+\small
+  \begin{tabular}{llll}
+    \toprule
+    \textbf{Model} & \textbf{Ablation / variant} & \textbf{Values tested} & \textbf{Metric} \\
+    \midrule
+    \multirow{4}{*}{DCGAN}
+      & Latent dim $z_\text{dim}$   & 64, \textbf{128}, 256              & FID, slerp smoothness \\
+      & Learning rate               & 1e-4, \textbf{2e-4}, 4e-4          & FID \\
+      & Augmentation                & off (\textbf{base}), on            & FID \\
+      & Training data               & cats only, \textbf{cats+dogs}       & FID vs cats/dogs \\
+    \midrule
+    \multirow{2}{*}{DDPM}
+      & DDIM steps                  & 10, 25, \textbf{50}, 100, 200      & FID, wall time \\
+      & EMA weights                 & off, \textbf{on} (decay 0.9999)    & FID \\
+    \midrule
+    VQ-VAE
+      & Codebook size $K$           & 1024 (collapsed) $\to$ \textbf{512}   & perplexity, FID \\
+    \midrule
+    \multirow{2}{*}{Post-hoc fix}
+      & Standard DCGAN ($n_c=1$)    & 150 ep, $g_\text{ch}=128$          & FID \\
+      & WGAN-GP $n_c=2$             & 200 ep                              & FID \\
+    \bottomrule
+  \end{tabular}
+  \vspace{5pt}
+
+  \textbf{Bold} = chosen baseline.
+  Primary metric: FID on 5\,000 generated vs 5\,000 real images.
+  Secondary: latent interpolation smoothness, reconstruction MSE (VQ-VAE).
+\end{frame}
+
+\begin{frame}[shrink=5]{Latent Space Smoothness vs. $z_\text{dim}$}
+  \centering
+  \includegraphics[width=\textwidth,height=0.20\textheight,keepaspectratio]{ablation/interp_zdim64.png}\\
+  \small $z_\text{dim}=64$\\[3pt]
+  \includegraphics[width=\textwidth,height=0.20\textheight,keepaspectratio]{ablation/interp_zdim128.png}\\
+  \small $z_\text{dim}=128$ (baseline)\\[3pt]
+  \includegraphics[width=\textwidth,height=0.20\textheight,keepaspectratio]{ablation/interp_zdim256.png}\\
+  \small $z_\text{dim}=256$\\[4pt]
+  Slerp, 10 frames. Transitions smooth for all variants.
+  $z_{64}$ slightly softer; $z_{128}$ and $z_{256}$ indistinguishable.
+\end{frame}
+
+\begin{frame}[shrink=5]{Quality vs.\ Compute Trade-off}
+  \centering
+  \includegraphics[width=0.88\textwidth,height=0.80\textheight,keepaspectratio]{compute_quality.png}\\[2pt]
+  \small DDPM dominates in quality; DCGAN fastest. Fixed DCGAN closes the gap significantly.
 \end{frame}
 
 \end{document}

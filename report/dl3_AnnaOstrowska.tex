@@ -1098,6 +1098,7 @@ All code is available in the project repository.  To reproduce results:
   \item Train: \texttt{uv run train-dcgan}, \texttt{uv run train-vqvae}, \texttt{uv run train-ddpm}
   \item Evaluate: \texttt{uv run python evaluate\_all.py}
   \item Run ablations: \texttt{uv run python ablate\_ddpm\_steps.py} and \texttt{uv run python ablate\_dcgan\_multiseed.py}
+  \item To generate new samples interactively from pre-trained checkpoints, see \texttt{notebooks/04\_ddpm\_results.ipynb} (DDPM), \texttt{notebooks/02\_dcgan\_results.ipynb} (DCGAN), and \texttt{notebooks/03\_vqvae\_results.ipynb} (VQ-VAE).
 \end{enumerate}
 
 Global seed 42 is set via \texttt{src/utils/seed.py}.

@@ -15,9 +15,9 @@ from pathlib import Path
 import torch
 import torch.nn.functional as F
 import yaml
-import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader, random_split
 
 sys.path.insert(0, str(Path(__file__).parent.parent))

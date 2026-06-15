@@ -10,13 +10,15 @@ import torch.nn as nn
 
 
 def _weights_init(m: nn.Module) -> None:
-    """Initialize Conv and BatchNorm layers as suggested in the DCGAN paper."""
+    """Initialize Conv and BatchNorm/InstanceNorm layers as suggested in the DCGAN paper."""
     classname = type(m).__name__
     if "Conv" in classname:
         nn.init.normal_(m.weight.data, 0.0, 0.02)
-    elif "BatchNorm" in classname:
-        nn.init.normal_(m.weight.data, 1.0, 0.02)
-        nn.init.constant_(m.bias.data, 0.0)
+    elif "BatchNorm" in classname or "InstanceNorm" in classname:
+        if m.weight is not None:
+            nn.init.normal_(m.weight.data, 1.0, 0.02)
+        if m.bias is not None:
+            nn.init.constant_(m.bias.data, 0.0)
 
 class Generator(nn.Module):
     """DCGAN Generator.
@@ -103,7 +105,7 @@ class Discriminator(nn.Module):
             out_ch = in_ch * 2
             layers += [
                 nn.Conv2d(in_ch, out_ch, 4, 2, 1, bias=False),
-                nn.BatchNorm2d(out_ch),
+                nn.InstanceNorm2d(out_ch, affine=True),
                 nn.LeakyReLU(0.2, inplace=True),
             ]
             in_ch = out_ch

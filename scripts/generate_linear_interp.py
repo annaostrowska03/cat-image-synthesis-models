@@ -37,8 +37,8 @@ def to_uint8_grid(strip: torch.Tensor) -> np.ndarray:
 
 
 def save_compare(slerp_strip: torch.Tensor, lerp_strip: torch.Tensor, out: Path, title: str) -> None:
-    top = to_uint8_grid(slerp_strip)
-    bot = to_uint8_grid(lerp_strip)
+    top = to_uint8_grid(lerp_strip)
+    bot = to_uint8_grid(slerp_strip)
     gap = np.ones((4, top.shape[1], 3), dtype=np.uint8) * 200
 
     combined = np.concatenate([top, gap, bot], axis=0)
@@ -48,12 +48,11 @@ def save_compare(slerp_strip: torch.Tensor, lerp_strip: torch.Tensor, out: Path,
     ax.axis("off")
     ax.set_title(title, fontsize=9, pad=4)
 
-    n = slerp_strip.shape[0]
     row_h = top.shape[0]
-    fig.text(0.01, 1 - (row_h / 2) / (h + 20) * 0.88, "slerp", va="center",
-             fontsize=8, color="#333", fontweight="bold")
-    fig.text(0.01, 1 - (row_h + 4 + row_h / 2) / (h + 20) * 0.88, "linear", va="center",
+    fig.text(0.01, 1 - (row_h / 2) / (h + 20) * 0.88, "linear", va="center",
              fontsize=8, color="#c0392b", fontweight="bold")
+    fig.text(0.01, 1 - (row_h + 4 + row_h / 2) / (h + 20) * 0.88, "slerp", va="center",
+             fontsize=8, color="#333", fontweight="bold")
 
     fig.tight_layout(pad=0.3)
     fig.savefig(out, dpi=180, bbox_inches="tight")
@@ -90,7 +89,7 @@ def run_dcgan(device: torch.device) -> None:
                              title="DCGAN Latent Interpolation (linear)")
     save_compare(s_strip, l_strip,
                  Path("outputs/dcgan/interpolation_compare.png"),
-                 "DCGAN: slerp (top) vs. linear interpolation (bottom)")
+                 "DCGAN: linear interpolation (top) vs. slerp (bottom)")
     print("DCGAN done.")
 
 
@@ -163,7 +162,7 @@ def run_ddpm(device: torch.device) -> None:
                              title="DDPM Noise-Space Interpolation (linear)")
     save_compare(s_strip, l_strip,
                  Path("outputs/ddpm/interpolation_compare.png"),
-                 "DDPM: slerp (top) vs. linear interpolation (bottom)")
+                 "DDPM: linear interpolation (top) vs. slerp (bottom)")
     print("DDPM done.")
 
 

@@ -17,6 +17,7 @@ to disk in preparation for FID calculation.
 from __future__ import annotations
 
 import argparse
+import shutil
 from pathlib import Path
 
 import torch
@@ -48,7 +49,9 @@ def save_samples(
     Images are saved normalized to [0, 1].
     """
     out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
+    if out_dir.exists():
+        shutil.rmtree(out_dir)
+    out_dir.mkdir(parents=True)
     generator.eval()
     if prior is not None:
         prior.eval()
@@ -111,7 +114,9 @@ def save_real_samples(
 ) -> None:
     """Save reference real images to disk for FID computation."""
     out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
+    if out_dir.exists():
+        shutil.rmtree(out_dir)
+    out_dir.mkdir(parents=True)
     saved = 0
     for batch in data_loader:
         if saved >= n_samples:

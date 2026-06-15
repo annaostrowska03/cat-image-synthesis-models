@@ -25,12 +25,16 @@ from src.utils.visualization import show_interpolation_strip
 
 
 def slerp(z0: torch.Tensor, z1: torch.Tensor, t: float) -> torch.Tensor:
-    """Spherical linear interpolation between two flat latent vectors."""
-    z0_n = z0 / z0.norm(dim=-1, keepdim=True).clamp(min=1e-8)
-    z1_n = z1 / z1.norm(dim=-1, keepdim=True).clamp(min=1e-8)
+    """Spherical linear interpolation between two latent tensors of any shape."""
+    orig_shape = z0.shape
+    z0f = z0.reshape(orig_shape[0], -1)
+    z1f = z1.reshape(orig_shape[0], -1)
+    z0_n = z0f / z0f.norm(dim=-1, keepdim=True).clamp(min=1e-8)
+    z1_n = z1f / z1f.norm(dim=-1, keepdim=True).clamp(min=1e-8)
     omega = torch.acos((z0_n * z1_n).sum(dim=-1, keepdim=True).clamp(-1, 1))
     sin_omega = omega.sin().clamp(min=1e-8)
-    return (torch.sin((1 - t) * omega) / sin_omega) * z0 + (torch.sin(t * omega) / sin_omega) * z1
+    result = (torch.sin((1 - t) * omega) / sin_omega) * z0f + (torch.sin(t * omega) / sin_omega) * z1f
+    return result.reshape(orig_shape)
 
 def lerp(z0: torch.Tensor, z1: torch.Tensor, t: float) -> torch.Tensor:
     """Linear interpolation."""
@@ -82,11 +86,11 @@ def dcgan_interpolation(checkpoint: str, cfg: dict, out: str, device: torch.devi
     torch.manual_seed(0)
     z0 = torch.randn(1, mc["z_dim"], device=device)
     z1 = torch.randn(1, mc["z_dim"], device=device)
-    strip = interpolation_strip(z0, z1, lambda z: G(z), use_slerp=True)
-    show_interpolation_strip(strip, out, title="DCGAN Latent Interpolation (slerp)")
+    strip = interpolation_strip(z0, z1, lambda z: G(z), use_slerp=False)
+    show_interpolation_strip(strip, out, title="DCGAN Latent Interpolation (linear)")
     latent_path = Path(out).with_name("interpolation_latents.pt")
     torch.save({"z0": z0.cpu(), "z1": z1.cpu(), "seed": 0,
-                "z_dim": mc["z_dim"], "method": "slerp"}, latent_path)
+                "z_dim": mc["z_dim"], "method": "lerp"}, latent_path)
     print(f"DCGAN interpolation strip saved to {out}")
     print(f"Latent vectors saved to {latent_path}")
 
@@ -172,7 +176,7 @@ def ddpm_interpolation(checkpoint: str, cfg: dict, out: str, device: torch.devic
     images = []
     for i in range(10):
         t = i / 9
-        z_i = slerp(z0, z1, t)
+        z_i = lerp(z0, z1, t)
         with torch.no_grad():
             img = diffusion.ddim_sample(
                 model, z_i.shape,
@@ -183,10 +187,10 @@ def ddpm_interpolation(checkpoint: str, cfg: dict, out: str, device: torch.devic
         images.append(img.squeeze(0))
 
     strip = torch.stack(images)
-    show_interpolation_strip(strip, out, title="DDPM Noise-Space Interpolation (slerp)")
+    show_interpolation_strip(strip, out, title="DDPM Noise-Space Interpolation (linear)")
     latent_path = Path(out).with_name("interpolation_latents.pt")
     torch.save({"z0": z0.cpu(), "z1": z1.cpu(), "seed": 0,
-                "shape": list(z0.shape), "method": "slerp"}, latent_path)
+                "shape": list(z0.shape), "method": "lerp"}, latent_path)
     print(f"DDPM interpolation strip saved to {out}")
     print(f"Latent tensors saved to {latent_path}")
 

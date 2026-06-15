@@ -1,0 +1,33 @@
+data:
+  cats_dir: data/cats
+  image_size: 64
+  batch_size: 32
+  num_workers: 0
+
+model:
+  in_channels: 3
+  hidden_channels: 128
+  embedding_dim: 64
+  num_embeddings: 1024          # K=1024 (collapsed to ~29% utilisation in experiment)
+  commitment_cost: 0.25
+  decay: 0.99
+
+prior:
+  train_prior: false            # prior not trained in this preliminary run
+
+training:
+  ae_epochs: 100
+  prior_epochs: 0
+  epochs: 100
+  lr: 2.0e-4
+  beta1: 0.9
+  beta2: 0.999
+  recon_loss: mse
+
+logging:
+  output_dir: outputs/vqvae_k1024
+  checkpoint_dir: checkpoints/vqvae_k1024
+  save_every_epochs: 10
+  sample_size: 64
+
+seed: 42

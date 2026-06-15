@@ -117,7 +117,7 @@ def main() -> None:
     for label, r in results.items():
         fids = list(r["fids"].values())
         if fids:
-            mean, std = np.mean(fids), np.std(fids, ddof=1) if len(fids) > 1 else 0.0
+            mean, std = np.mean(fids), np.std(fids, ddof=0)
             print(f"{label:<22}  {mean:>10.2f}  {std:>8.2f}", flush=True)
     print(f"\nFull results: {RESULTS_FILE}", flush=True)
 

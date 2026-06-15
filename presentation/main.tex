@@ -237,8 +237,8 @@
 
       \vspace{5pt}
       \textbf{Why EMA decay 0.9999?} Slower EMA reduces weight noise
-      amplified by the long reverse chain. FID drops from 54.51 (no EMA)
-      to 24.36 (with EMA) at 50 DDIM steps, a 55\% improvement.
+      amplified by the long reverse chain. FID drops from 55.43 (no EMA)
+      to 24.11 (with EMA) at 50 DDIM steps, a 57\% improvement.
     \end{column}
     \begin{column}{0.43\textwidth}
       \includegraphics[width=\linewidth]{ddpm/samples_epoch0200.png}
@@ -274,7 +274,7 @@
       \textbf{Why such a large gap?}
       \begin{itemize}
         \item DDPM has a well-defined MSE objective: smooth, stable gradients
-        \item EMA weights reduce FID by 55\% vs.\ non-EMA at 50 steps
+        \item EMA weights reduce FID by 57\% vs.\ non-EMA at 50 steps
         \item GAN mode collapse limits diversity despite WGAN-GP
         \item VQ-VAE: good reconstruction, PixelCNN prior limits sample quality
       \end{itemize}
@@ -335,17 +335,17 @@
   DCGAN shows adversarial oscillation; VQ-VAE converges reliably with EMA codebook.
 \end{frame}
 
-\begin{frame}[shrink=8]{Latent Space Interpolation: Slerp vs.\ Linear}
+\begin{frame}[shrink=8]{Latent Space Interpolation: Linear vs.\ Slerp}
   \centering
   \includegraphics[width=\textwidth,height=0.28\textheight,keepaspectratio]{dcgan/interpolation_compare.png}\\
-  \small DCGAN --- \textbf{slerp} (top) vs.\ linear (bottom)\\[5pt]
+  \small DCGAN --- \textbf{linear} (top) vs.\ slerp (bottom)\\[5pt]
   \includegraphics[width=\textwidth,height=0.28\textheight,keepaspectratio]{ddpm/interpolation_compare.png}\\
-  \small DDPM --- \textbf{slerp} (top) vs.\ linear (bottom)\\[4pt]
+  \small DDPM --- \textbf{linear} (top) vs.\ slerp (bottom)\\[4pt]
   \footnotesize\color{mutedtext}
-  Both methods shown. Linear interpolation (bottom rows) crosses a low-density
-  region near the origin of $\mathcal{N}(0,I)$, producing blurrier intermediate
-  frames --- most visible in DDPM (washed-out midpoints).
-  Slerp preserves the norm of the latent vector and yields smoother transitions.
+  Linear interpolation is the primary method (top rows).
+  Slerp is shown for comparison: it preserves the norm of the latent vector,
+  avoiding the low-density region near the origin of $\mathcal{N}(0,I)$
+  that causes blurry midpoints in linear interpolation (most visible in DDPM).
 \end{frame}
 
 \begin{frame}[shrink=8]{VQ-VAE Reconstruction Quality}
@@ -408,24 +408,24 @@
           \toprule
           Steps & FID $\downarrow$ & Speedup \\
           \midrule
-          10  & 66.92 & $100\times$ \\
-          25  & 60.02 & $40\times$ \\
-          \textbf{50}  & \textbf{54.51} & $\mathbf{20\times}$ \\
-          100 & 48.70 & $10\times$ \\
-          200 & 39.81 & $5\times$ \\
+          10  & 66.90 & $100\times$ \\
+          25  & 60.26 & $40\times$ \\
+          \textbf{50}  & \textbf{55.43} & $\mathbf{20\times}$ \\
+          100 & 48.35 & $10\times$ \\
+          200 & 39.56 & $5\times$ \\
           \bottomrule
         \end{tabular}\vspace{3pt}
       \end{block}
     \end{column}
     \begin{column}{0.48\textwidth}
-      \begin{block}{EMA at 50 steps: $-55\%$ FID}
+      \begin{block}{EMA at 50 steps: $-57\%$ FID}
         \centering\vspace{3pt}
         \begin{tabular}{lc}
           \toprule
           Weights & FID $\downarrow$ \\
           \midrule
-          Without EMA & 54.51 \\
-          \textbf{With EMA} & \textbf{24.36} \\
+          Without EMA & 55.43 \\
+          \textbf{With EMA} & \textbf{24.11} \\
           \bottomrule
         \end{tabular}\vspace{3pt}
       \end{block}
@@ -609,7 +609,7 @@
   \end{block}
   \vspace{3pt}
   \begin{block}{RQ4: DDIM speed-quality trade-off}
-    50 steps: $20\times$ speedup, FID 54.51 (non-EMA) or 24.36 (with EMA).
+    50 steps: $20\times$ speedup, FID 55.43 (non-EMA) or 24.11 (with EMA).
     Below 25 steps quality degrades sharply. 50 steps is the practical sweet spot.
   \end{block}
 \end{frame}

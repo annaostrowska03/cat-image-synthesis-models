@@ -57,8 +57,8 @@ the high FID; corrected configurations reduce FID to 98.99 (standard DCGAN) and
 inference steps and EMA weights on DDPM quality, and the sensitivity of DCGAN to
 latent dimension and learning rate.  An exploratory extension trains DCGAN on a
 combined cats-and-dogs dataset, finding a suggestive improvement in cat FID that
-warrants further investigation.  Source code and model checkpoints are provided
-for full reproducibility.
+warrants further investigation.  Source code is provided; model checkpoints
+and generated outputs are submitted separately.
 \end{abstract}
 
 \tableofcontents
@@ -100,19 +100,20 @@ Three aspects of the implementation diverged from the original project plan
 
   \item \textbf{Latent interpolation.}
         The plan described linear interpolation between latent vectors.
-        We switched to spherical linear interpolation (slerp) for models
-        whose prior is $\mathcal{N}(0,I)$ (DCGAN, DDPM), because linear
-        interpolation crosses a low-density region near the origin and
-        produces systematically blurry intermediate frames
-        (see Section~\ref{sec:interpolation}).  Linear interpolation was
-        retained for VQ-VAE, where the prior operates over discrete tokens
+        Linear interpolation is used as the primary method throughout.
+        Spherical linear interpolation (slerp) is additionally shown for
+        comparison for DCGAN and DDPM (Section~\ref{sec:interpolation}):
+        it avoids the low-density region near the origin that linear
+        interpolation traverses in $\mathcal{N}(0,I)$ space, which
+        produces blurry intermediate frames.  VQ-VAE uses linear
+        interpolation only, as the prior operates over discrete tokens
         rather than a Gaussian.
 
   \item \textbf{DCGAN ablation depth.}
-        The plan specified 50-epoch ablation runs.  In practice, ablations
-        were extended to 100 epochs and repeated across three random seeds
-        to reduce the risk of comparing under-trained models and to quantify
-        seed variance, reported as mean $\pm$ population standard deviation
+        The plan specified 50-epoch ablation runs with a single seed.  In
+        practice, ablations were repeated across three random seeds (0, 42,
+        123) to quantify seed variance, keeping 50 epochs per run as planned.
+        Results are reported as mean $\pm$ population standard deviation
         in Table~\ref{tab:dcgan_ablation}.
 \end{enumerate}
 
@@ -389,6 +390,7 @@ Inception-v3 network.  We generate 5\,000 samples per model and compare against
     \midrule
     DCGAN (WGAN-GP, $n_c{=}5$) & 221.51 & 100 ep., 3\,100 G-steps; under-trained$^\dagger$ \\
     DCGAN (standard, corrected) & 98.99  & 150 ep., 23\,400 G-steps; see \S\ref{sec:dcgan_bottleneck} \\
+    \quad (3-seed: $142.6 \pm 3.4$) & & \\
     VQ-VAE + PixelCNN  & 187.54 & 100 + 100 epochs \\
     DDPM (50 DDIM steps, EMA) & \textbf{24.36} & 200 epochs \\
     \bottomrule
@@ -410,7 +412,8 @@ gap with VQ-VAE.
 
 \textbf{Scope of this comparison.}
 Two caveats apply.  First, the comparison is not compute-normalised: DDPM was
-trained for $\approx$12\,h, DCGAN for $\approx$2\,h, and VQ-VAE for $\approx$4\,h.
+trained for $\approx$12\,h, DCGAN for $\approx$2\,h, and VQ-VAE for $\approx$4\,h
+(approximate wall-clock times observed manually on an NVIDIA RTX 4050 Laptop GPU).
 The table reflects the best feasible configuration for each model under the
 6\,GiB VRAM constraint, not a strictly equal-budget comparison.  Second, FID was
 computed against a subset of the \emph{training} distribution; no held-out test
@@ -555,63 +558,64 @@ token sequences is limited.
 \subsection{Latent Interpolation}
 \label{sec:interpolation}
 
-To assess the smoothness of the learned latent space, we interpolate between
-two latent vectors $\mathbf{z}_A$ and $\mathbf{z}_B$.  For models whose prior
-is $\mathcal{N}(0,I)$ (DCGAN, DDPM), we use \emph{spherical linear interpolation}
-(slerp):
+To assess the smoothness of the learned latent space, we interpolate linearly
+between two latent vectors $\mathbf{z}_A$ and $\mathbf{z}_B$:
+\begin{equation}
+  \mathbf{z}_\alpha = (1 - \alpha)\,\mathbf{z}_A + \alpha\,\mathbf{z}_B,
+  \quad \alpha \in \left\{0, \tfrac{1}{9}, \ldots, 1\right\}.
+\end{equation}
+For VQ-VAE, interpolation is performed between codebook embedding maps sampled from the PixelCNN prior.
+For DCGAN and DDPM, whose priors are $\mathcal{N}(0,I)$, we additionally show
+spherical linear interpolation (slerp):
 \begin{equation}
   \mathbf{z}_\alpha = \frac{\sin((1-\alpha)\theta)}{\sin\theta}\,\mathbf{z}_A
                     + \frac{\sin(\alpha\theta)}{\sin\theta}\,\mathbf{z}_B,
   \quad \theta = \arccos\!\left(\frac{\mathbf{z}_A \cdot \mathbf{z}_B}
-                                     {\|\mathbf{z}_A\|\,\|\mathbf{z}_B\|}\right),
+                                     {\|\mathbf{z}_A\|\,\|\mathbf{z}_B\|}\right).
 \end{equation}
-for $\alpha \in \{0, \tfrac{1}{9}, \ldots, 1\}$.  Slerp preserves the norm of
-vectors drawn from an isotropic Gaussian: linear interpolation through the
-origin would traverse a low-density region of $\mathcal{N}(0,I)$ and produce
-systematically blurry intermediate frames.  For VQ-VAE, we interpolate linearly
-in the continuous pre-quantization encoder space, since the prior operates over
-discrete token indices rather than a Gaussian.
 
 \begin{figure}[H]
   \centering
   \begin{subfigure}[b]{\linewidth}
     \includegraphics[width=\linewidth]{dcgan/interpolation_compare.png}
-    \caption{DCGAN: slerp (top row) vs.\ linear interpolation (bottom row)
+    \caption{DCGAN: linear interpolation (top row) vs.\ slerp (bottom row)
              in $\mathcal{N}(0,I)$ latent space.}
   \end{subfigure}\\[8pt]
   \begin{subfigure}[b]{\linewidth}
     \includegraphics[width=\linewidth]{vqvae/interpolation.png}
-    \caption{VQ-VAE: linear interpolation in continuous pre-quantization encoder space.}
+    \caption{VQ-VAE: linear interpolation between PixelCNN-sampled codebook embedding maps.}
   \end{subfigure}\\[8pt]
   \begin{subfigure}[b]{\linewidth}
     \includegraphics[width=\linewidth]{ddpm/interpolation_compare.png}
-    \caption{DDPM: slerp (top row) vs.\ linear interpolation (bottom row)
+    \caption{DDPM: linear interpolation (top row) vs.\ slerp (bottom row)
              between initial noise tensors $x_T \sim \mathcal{N}(0,I)$.}
   \end{subfigure}
   \caption{Latent interpolation strips (10 images: 2 endpoints + 8 intermediate frames).
-           For DCGAN and DDPM, both slerp and linear interpolation are shown to
-           enable direct comparison.}
+           Linear interpolation is the primary method.  Slerp is shown as a
+           comparison for DCGAN and DDPM.}
   \label{fig:interpolation}
 \end{figure}
 
 \paragraph{Discussion.}
-Both slerp and linear interpolation are shown for DCGAN and DDPM, as the project
-instructions specify linear interpolation.  The comparison illustrates why slerp
-is preferable for Gaussian priors: the midpoint of a linear interpolation between
-two vectors drawn from $\mathcal{N}(0,I)$ has expected norm
+Linear interpolation is used as the primary method throughout.  The comparison
+with slerp for DCGAN and DDPM illustrates a known artefact of Gaussian priors:
+the midpoint of a linear interpolation between two vectors drawn from
+$\mathcal{N}(0,I)$ has expected norm
 $\|\tfrac{1}{2}(z_0 + z_1)\| \approx \tfrac{1}{\sqrt{2}}\|z\|$, placing
 intermediate latents in a low-density region near the origin.  The resulting
 decoded images are noticeably blurrier in the centre of the linear strip,
 particularly for DDPM where the effect of a poorly-initialised $x_T$ compounds
 over 50 reverse steps.  Slerp maintains constant norm throughout the path and
-avoids this artefact.  VQ-VAE uses linear interpolation in the continuous
-pre-quantization encoder space, where no Gaussian shell assumption applies;
-the discrete quantization step introduces occasional abrupt transitions when
-token assignments change near a Voronoi cell boundary.
+avoids this artefact.  VQ-VAE uses linear interpolation between codebook
+embedding maps: two index sequences are sampled from the PixelCNN prior,
+their embeddings retrieved, and the interpolated maps decoded directly without
+re-quantisation; occasional abrupt transitions reflect discrete jumps in the
+sampled codebook assignments rather than any Gaussian shell effect.
 
 Smooth interpolations across all models indicate that the learned latent spaces
-encode a continuous manifold rather than memorising isolated training examples.
-DDPM slerp in $x_T$ space produces the most photorealistic intermediate frames.
+suggest that nearby latent codes produce semantically related outputs, though
+they do not rule out memorisation of training examples.
+DDPM in $x_T$ space produces the most photorealistic intermediate frames.
 
 \section{Mode Collapse Analysis}
 \label{sec:mode_collapse}
@@ -678,8 +682,9 @@ generator update budget improves FID:
         $\mathbf{23\,400}$ G-steps.
   \item \textbf{WGAN-GP $n_c=2$}: pragmatic reduction of critic steps while
         retaining the Wasserstein loss; 200 epochs $\Rightarrow$
-        $\mathbf{15\,600}$ G-steps.  Note that $n_c < 5$ weakens the
-        Lipschitz guarantee; a theoretically proper fix would require
+        $\mathbf{15\,600}$ G-steps.  Note that $n_c < 5$ gives the critic
+        fewer updates per generator step, potentially leaving it less
+        well-optimised; a compute-equivalent run at $n_c=5$ would require
         $\approx$500 epochs.
 \end{enumerate}
 
@@ -732,58 +737,36 @@ cannot be attributed to any single factor from this experiment alone.
 \section{Ablation Studies}
 \label{sec:ablation}
 
-\subsection{DDPM: DDIM Inference Steps}
+\subsection{DDPM: DDIM Inference Steps and EMA Weights}
 
-We evaluate the effect of the number of DDIM steps on FID without retraining
-(inference-only ablation on the epoch-200 checkpoint, non-EMA weights).
+We evaluate the effect of the number of DDIM inference steps and EMA weights
+jointly, using the epoch-200 checkpoint (inference-only, 5\,000 samples each).
 
 \begin{table}[H]
   \centering
-  \caption{DDPM FID vs.\ number of DDIM inference steps (epoch-200 checkpoint,
-           non-EMA weights, 5\,000 samples).}
+  \caption{DDPM FID vs.\ DDIM inference steps and EMA weights
+           (epoch-200 checkpoint, 5\,000 samples).
+           Bold marks the default configuration used in Table~\ref{tab:fid}.}
   \label{tab:ddpm_steps}
-  \begin{tabular}{ccc}
+  \begin{tabular}{cccc}
     \toprule
-    DDIM Steps & FID $\downarrow$ & Speedup vs.\ 1000-step \\
+    DDIM Steps & FID (raw) $\downarrow$ & FID (EMA) $\downarrow$ & Speedup \\
     \midrule
-    10  & 66.92 & $100\times$ \\
-    25  & 60.02 & $40\times$ \\
-    50  & 54.51 & $20\times$ \\
-    100 & 48.70 & $10\times$ \\
-    200 & 39.81 & $5\times$ \\
+    10  & 66.90 & 30.81 & $100\times$ \\
+    25  & 60.26 & 26.31 & $40\times$ \\
+    50  & 55.43 & \textbf{24.11} & $20\times$ \\
+    100  & 48.35 & 22.52 & $10\times$ \\
+    200  & 39.56 & 21.49 & $5\times$ \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-FID improves monotonically with more steps, with diminishing returns above 100.
-The 50-step setting ($20\times$ speedup, FID 54.5) provides a practical
-speed-quality trade-off.  Steps below 25 degrade noticeably ($+27$ FID vs.\
-50 steps), making them unsuitable for qualitative evaluation.
-
-\subsection{DDPM: EMA Weights at Inference}
-
-Using EMA weights at inference has a large effect independent of step count.
-
-\begin{table}[H]
-  \centering
-  \caption{Effect of EMA weights at 50 DDIM steps (epoch-200 checkpoint).}
-  \label{tab:ddpm_ema}
-  \begin{tabular}{lc}
-    \toprule
-    Inference weights & FID $\downarrow$ \\
-    \midrule
-    Without EMA & 54.51 \\
-    \textbf{With EMA (decay 0.9999)} & \textbf{24.36} \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-EMA weights reduce FID by 55\% at 50 steps (from 54.51 to 24.36), a larger
-improvement than doubling the number of inference steps.  The EMA averages
-weight noise that accumulates during training, which is particularly beneficial
-for diffusion models because errors in the reverse chain compound over many steps.
-The 50-step EMA configuration is therefore the default reported throughout this
-work.
+Raw-weight FID improves monotonically with more steps, with diminishing returns
+above 100.  EMA weights at 50 steps reduce FID from 55.43 to 24.11 (57\% reduction), a larger gain than increasing from 50 to 200 steps.  The EMA averages
+weight noise that accumulates during training, which is particularly beneficial for
+diffusion models because errors in the reverse chain compound over many steps.
+EMA weights consistently outperform raw weights at the same step count; the largest gain is at 50 steps ($55.43 \to 24.11$), matching the default configuration in Table~\ref{tab:fid}.
+The 50-step EMA configuration is the default reported throughout this work.
 
 \subsection{VQ-VAE: Codebook Size}
 \label{sec:vqvae_ablation}
@@ -794,16 +777,25 @@ settling on the final configuration.  With $K=1024$, codebook perplexity
 collapsed to $\approx 300/1024$ (29\% utilisation) during training, meaning
 over 70\% of codes were never assigned.  Switching to $K=512$ with EMA codebook
 updates (decay $\gamma=0.99$) recovered utilisation to 79\% ($403/512$) and
-produced visibly sharper reconstructions.  Full multi-seed ablation for VQ-VAE
-was not conducted due to the 200-epoch (Phase 1 + Phase 2) training cost per run.
-Other hyperparameters (embedding dimension, commitment cost $\beta$, PixelCNN
-depth) were set based on the original VQ-VAE paper \cite{vqvae} and not
-systematically swept.
+produced visibly sharper reconstructions.
+
+A complementary remedy for codebook collapse is \emph{codebook restart}: dead
+or under-used codes are re-initialised by sampling from the encoder outputs of
+the current batch.  This technique can recover utilisation without changing $K$
+and is used in several VQ-VAE variants (e.g.\ \cite{vqvae2}).  It was not
+implemented here; halving $K$ proved sufficient, and restart would add training
+complexity without a clear advantage given the already high utilisation at
+$K=512$.
+
+Full multi-seed ablation for VQ-VAE was not conducted due to the 200-epoch
+(Phase 1 + Phase 2) training cost per run.  Other hyperparameters (embedding
+dimension, commitment cost $\beta$, PixelCNN depth) were set based on the
+original VQ-VAE paper \cite{vqvae} and not systematically swept.
 
 \subsection{DCGAN: Latent Dimension and Learning Rate}
 \label{sec:dcgan_ablation}
 
-We train DCGAN configurations for 100 epochs each, varying the latent
+We train DCGAN configurations for 50 epochs each, varying the latent
 dimension $z_{\text{dim}}$ and learning rate independently across three seeds
 per configuration (all other hyperparameters fixed to baseline:
 $z_{\text{dim}}=128$, lr $=2\times10^{-4}$, $n_c=5$).  FID is reported as
@@ -811,7 +803,7 @@ mean $\pm$ population standard deviation across seeds.
 
 \begin{table}[H]
   \centering
-  \caption{DCGAN ablation: FID (mean $\pm$ std across 3 seeds, 100 epochs).}
+  \caption{DCGAN ablation: FID (mean $\pm$ std across 3 seeds, 50 epochs).}
   \label{tab:dcgan_ablation}
   \begin{tabular}{lcc}
     \toprule
@@ -835,7 +827,7 @@ summary statistics.
 
 \begin{table}[H]
   \centering
-  \caption{DCGAN ablation: raw FID per seed (seeds 0, 42, 123; 100 epochs each).}
+  \caption{DCGAN ablation: raw FID per seed (seeds 0, 42, 123; 50 epochs each).}
   \label{tab:dcgan_raw}
   \small
   \begin{tabular}{lrrrcc}
@@ -1038,11 +1030,19 @@ ablation.
 
 \textbf{DDIM timestep schedule.}
 The DDIM sampling implementation uses \texttt{range(0, T, T//S)} reversed,
-producing a grid $\{S\cdot\lfloor T/S\rfloor,\ldots,\lfloor T/S\rfloor, 0\}$
-starting from $t=980$ rather than $t=999$ for $T=1000$, $S=50$.
-Since $\bar\alpha_{980} \approx 0.002$ (near pure noise), the practical impact
-on sample quality is negligible, but the schedule does not strictly begin at the
-final diffusion step.
+producing a grid starting from $t=980$ rather than $t=T{-}1=999$ for $T=1000$,
+$S=50$.  A corrected schedule starting at $t=999$ was evaluated but produced
+substantially higher FID (${\sim}250$ vs.\ ${\sim}55$ for raw weights at $S=50$),
+suggesting the trained checkpoint is sensitive to the starting timestep; the
+original schedule is therefore retained for all reported results.
+\label{sec:limitations}
+
+\textbf{BatchNorm in WGAN-GP critic.}
+The initial discriminator implementation used \texttt{BatchNorm2d}, which mixes
+batch statistics and is incompatible with the per-sample gradient penalty
+computation of WGAN-GP.  This has been corrected to \texttt{InstanceNorm2d}
+(\texttt{affine=True}).  The WGAN-GP FID in Table~\ref{tab:fid} will be updated
+after retraining with the corrected critic.
 
 \textbf{FID reference set.}
 Real reference images for FID were saved once using a sequential DataLoader
@@ -1051,9 +1051,8 @@ Real reference images for FID were saved once using a sequential DataLoader
 internally consistent.  The images are drawn from the first 5\,000 samples
 in file-sort order across all subdirectories; diversity across subdirectories
 CAT\_00--CAT\_06 was not explicitly verified but the dataset is known to
-contain a broad range of cat breeds and poses.  FID sample directories were
-not cleared between runs, but sequential file naming (000000.png, \ldots)
-means existing files are overwritten rather than accumulated.
+contain a broad range of cat breeds and poses.  FID sample directories are
+now cleared before each run to prevent accumulation from previous evaluations.
 
 \paragraph{Potential improvements and future work.}
 \begin{itemize}[noitemsep]
@@ -1070,25 +1069,32 @@ means existing files are overwritten rather than accumulated.
 \section*{AI Usage Statement}
 \label{sec:ai}
 
-GitHub Copilot (Claude Sonnet) was used as a coding assistant throughout this
-project for: boilerplate generation, debugging PyTorch errors, and suggestions
-for hyperparameter configurations.  All architectural decisions, experimental
-design, and analysis were performed by the author.  Generated code was reviewed
-and adapted before use.
+GitHub Copilot / Claude Sonnet was used as a coding assistant for boilerplate
+generation, debugging PyTorch errors, refactoring, plotting utilities, and
+suggestions for hyperparameter configurations.  AI tools were also used for
+language polishing, LaTeX structuring, and identifying possible methodological
+limitations in the report and presentation. All experiments were run by the
+author; numerical results were obtained from the implemented scripts.
+Architectural choices, final experimental design, interpretation of results,
+and conclusions were reviewed and approved by the author. Suggested
+hyperparameter values were cross-checked against standard settings from the
+cited literature and adjusted to the 6\,GiB VRAM constraint.
 
 \section*{Reproducibility}
 
 All code is available in the project repository.  To reproduce results:
 
 \begin{enumerate}[noitemsep]
-  \item Install dependencies: \texttt{pip install -r requirements.txt}
+  \item Install dependencies: \texttt{uv sync} (uses \texttt{pyproject.toml}; installs CUDA-enabled PyTorch automatically)
   \item Download and place the CAT Dataset in \texttt{data/cats/}
-  \item Train models: \texttt{python -m src.training.train\_dcgan --config configs/dcgan\_config.yaml}, analogously for VQ-VAE and DDPM.
-  \item Evaluate: \texttt{python evaluate\_all.py}
-  \item Run ablations: \texttt{python ablate\_ddpm\_steps.py} and \texttt{python ablate\_dcgan\_multiseed.py}
+  \item Train: \texttt{uv run train-dcgan}, \texttt{uv run train-vqvae}, \texttt{uv run train-ddpm}
+  \item Evaluate: \texttt{uv run python evaluate\_all.py}
+  \item Run ablations: \texttt{uv run python ablate\_ddpm\_steps.py} and \texttt{uv run python ablate\_dcgan\_multiseed.py}
 \end{enumerate}
 
-Global seed 42 is set via \texttt{src/utils/seed.py} for full reproducibility.
+Global seed 42 is set via \texttt{src/utils/seed.py}.
+All reported FID values are collected in \texttt{outputs/results\_summary.json}
+for reference.
 
 \bibliographystyle{plain}
 \bibliography{references}

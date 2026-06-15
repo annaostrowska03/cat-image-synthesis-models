@@ -129,10 +129,10 @@ uv run jupyter notebook
 |---|---|---|
 | DCGAN (WGAN-GP) | 221.51 | z_dim=128, 100 epochs |
 | VQ-VAE + PixelCNN | 187.54 | K=512, D=64, 100+100 epochs |
-| **DDPM (DDIM 50 steps)** | **24.36** | T=1000, 200 epochs, EMA |
+| **DDPM (DDIM 50 steps)** | **24.11** | T=1000, 200 epochs, EMA |
 
 DDPM achieves substantially lower FID, which is consistent with results reported in the diffusion models literature for similar-scale experiments. Key ablation findings (DCGAN ablations are 3-seed mean ± std):
-- **DDIM steps** (DDPM): FID drops from 66.92 (10 steps) to 39.81 (200 steps); 50 steps (FID 54.51 without EMA, 24.36 with EMA) is the practical trade-off.
+- **DDIM steps** (DDPM): FID drops from 66.90 (10 steps) to 39.56 (200 steps); 50 steps (FID 55.43 without EMA, 24.11 with EMA) is the practical trade-off.
 - **Latent dim** (DCGAN): z_dim=64 gives best mean FID (246.65 ± 5.57) vs baseline z_dim=128 (264.25 ± 20.21); z_dim=256 is equivalent to baseline. Baseline has high seed variance.
 - **Learning rate** (DCGAN): lr=4e-4 gives best mean FID (220.05 ± 4.47, −44 pts vs baseline); lr=1e-4 is worst (295.11 ± 18.27).
 - **Cats+Dogs dataset**: mixed DCGAN achieves FID 206.57 vs cats and 197.79 vs dogs, compared to the cats-only baseline of 221.51 (improvement is within single-seed variance; see report for caveats).
@@ -141,7 +141,7 @@ DDPM achieves substantially lower FID, which is consistent with results reported
 We systematically investigate the following factors:
 1. **Latent Dimensionality:** Impact of the latent noise vector z-dimension on generation quality.
 2. **Learning Rate:** Impact of learning rate on DCGAN training stability and FID.
-3. **Stability:** Techniques to prevent mode collapse: label smoothing (DCGAN), WGAN-GP gradient penalty, EMA weights (DDPM).
+3. **Stability:** Techniques to prevent mode collapse: WGAN-GP gradient penalty, EMA weights (DDPM).
 4. **Dataset Complexity:** Comparing models trained on cats only versus a mixed cats and dogs dataset.
 
 ## Evaluation Metrics

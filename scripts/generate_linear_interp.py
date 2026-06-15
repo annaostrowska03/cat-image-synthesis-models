@@ -2,9 +2,9 @@
 
 Outputs:
     outputs/dcgan/interpolation_linear.png - linear only
-    outputs/dcgan/interpolation_compare.png - slerp (top) vs linear (bottom)
+    outputs/dcgan/interpolation_compare.png - linear (top) vs slerp (bottom)
     outputs/ddpm/interpolation_linear.png - linear only
-    outputs/ddpm/interpolation_compare.png - slerp (top) vs linear (bottom)
+    outputs/ddpm/interpolation_compare.png - linear (top) vs slerp (bottom)
 
 Run from project root:
     python scripts/generate_linear_interp.py

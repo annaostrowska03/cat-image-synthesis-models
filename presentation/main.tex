@@ -262,7 +262,7 @@
           DCGAN (WGAN-GP, $n_c{=}5$) & 221.51 & $\sim$2\,h \\
           \quad$\hookrightarrow$ corrected (std, $n_c{=}1$) & 98.99 & $\sim$3\,h \\
           VQ-VAE+PixelCNN   & 187.54 & $\sim$4\,h \\
-          \textbf{DDPM+EMA} & \textbf{24.36}  & $\sim$12\,h \\
+          \textbf{DDPM+EMA} & \textbf{24.11}  & $\sim$12\,h \\
           \bottomrule
         \end{tabular}\vspace{3pt}
       \end{block}
@@ -299,7 +299,7 @@
     \hfill
     \begin{subfigure}[b]{0.31\textwidth}
       \includegraphics[width=\linewidth]{ddpm/samples_epoch0200.png}
-      \caption{\textbf{DDPM}\\{\small FID 24.36}}
+      \caption{\textbf{DDPM}\\{\small FID 24.11}}
     \end{subfigure}
   \end{figure}
   \vspace{1pt}
@@ -552,9 +552,9 @@
         \item \textbf{Standard DCGAN}: switch to BCE loss; $n_c=1$ is the
               correct standard (not a compromise), $g_\text{ch}=128$,
               150 ep.\ $\Rightarrow$ \textbf{23\,400 G-steps}
-        \item \textbf{WGAN-GP $n_c=2$}: pragmatic fix; theoretically
-              $n_c\geq5$ required to preserve Lipschitz guarantee ---
-              proper fix $\approx$500 ep., 200 ep.\ $\Rightarrow$ \textbf{15\,600 G-steps}
+        \item \textbf{WGAN-GP $n_c=2$}: pragmatic fix; fewer critic steps
+              may leave the critic less well-optimised ---
+              compute-equivalent $n_c{=}5$ would need $\approx$500 ep., 200 ep.\ $\Rightarrow$ \textbf{15\,600 G-steps}
       \end{itemize}
 
       \vspace{4pt}
@@ -592,7 +592,7 @@
 \begin{frame}[shrink=5]{Research Questions: Answers}
 \footnotesize
   \begin{block}{RQ1: Architecture trade-off under 6\,GiB VRAM}
-    DDPM: best quality (FID 24.36, 12\,h, 5.5\,GiB).
+    DDPM: best quality (FID 24.11, 12\,h, 5.5\,GiB).
     DCGAN: fastest (2\,h, $<$2\,GiB) but mode collapse.
     VQ-VAE: stable training, PixelCNN prior is the bottleneck.
   \end{block}
@@ -627,7 +627,7 @@
           \toprule
           Model & FID & Strength \\
           \midrule
-          \textbf{DDPM} & \textbf{24.36} & quality \\
+          \textbf{DDPM} & \textbf{24.11} & quality \\
           VQ-VAE        & 187.54 & stability \\
           DCGAN         & 221.51 & speed \\
           \bottomrule
@@ -635,7 +635,7 @@
       \end{block}
       \vspace{5pt}
       \begin{itemize}
-        \item Diffusion clearly outperforms GAN and VAE
+        \item In our setup, DDPM clearly outperforms GAN and VAE
         \item For DDPM, EMA more impactful than doubling DDIM steps
         \item DDIM enables practical use at 50 steps
         \item Dog images: suggestive improvement, not conclusive

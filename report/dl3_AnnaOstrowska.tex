@@ -48,7 +48,7 @@ Model with DDIM fast sampling (DDPM).  All models are trained from scratch on
 the CAT Dataset ($9\,997$ images) using a single consumer GPU with 6\,GiB VRAM.
 Models are compared quantitatively using the Fr\'{e}chet Inception Distance (FID)
 computed on 5\,000 generated images and qualitatively through visual inspection
-and latent space interpolation.  DDPM achieves the lowest FID (24.36 at 50 DDIM
+and latent space interpolation. DDPM achieves the lowest FID (24.11 at 50 DDIM
 steps with EMA weights), substantially outperforming VQ-VAE (187.54) and
 DCGAN (221.51).  A post-hoc analysis of the DCGAN training configuration reveals
 that generator starvation caused by $n_{\text{critic}}=5$ likely contributed to
@@ -267,12 +267,12 @@ The Discriminator $D$ mirrors this with four strided-convolution blocks
 The architecture follows DCGAN guidelines \cite{dcgan}.
 
 \textbf{Implementation note.}
-The discriminator retains Batch Normalisation layers from the DCGAN architecture,
-which is a known sub-optimal choice for WGAN-GP: BatchNorm mixes statistics
-across samples in a batch, which interferes with the per-sample gradient penalty
-computation.  The original WGAN-GP paper recommends Layer Normalisation in the
-critic.  We did not modify the critic normalisation; this may have slightly
-reduced training stability and is a limitation of the current implementation.
+The original discriminator used \texttt{BatchNorm2d}, which is a sub-optimal
+choice for WGAN-GP: BatchNorm mixes batch statistics and interferes with the
+per-sample gradient penalty computation. Thereported baseline FID of 221.51
+was obtained with this BatchNorm discriminator. The code has since been
+corrected to \texttt{InstanceNorm2d(affine=True)}; results from the corrected
+critic are reported separately in Section~\ref{sec:dcgan_bottleneck}.
 
 \paragraph{Training objective.}
 We adopt the Wasserstein loss with gradient penalty (WGAN-GP \cite{wgangp}):
@@ -389,10 +389,10 @@ Inception-v3 network.  We generate 5\,000 samples per model and compare against
     Model & FID $\downarrow$ & Notes \\
     \midrule
     DCGAN (WGAN-GP, $n_c{=}5$) & 221.51 & 100 ep., 3\,100 G-steps; under-trained$^\dagger$ \\
-    DCGAN (standard, corrected) & 98.99  & 150 ep., 23\,400 G-steps; see \S\ref{sec:dcgan_bottleneck} \\
-    \quad (3-seed: $142.6 \pm 3.4$) & & \\
+    DCGAN (standard, corrected) & 98.99  & 150 ep., 23\,400 G-steps; single run \\
+    \quad 3-seed rerun: $142.6 \pm 3.4$ & & see \S\ref{sec:dcgan_bottleneck} \\
     VQ-VAE + PixelCNN  & 187.54 & 100 + 100 epochs \\
-    DDPM (50 DDIM steps, EMA) & \textbf{24.36} & 200 epochs \\
+    DDPM (50 DDIM steps, EMA) & \textbf{24.11} & 200 epochs \\
     \bottomrule
   \end{tabular}
   \begin{flushleft}
@@ -765,7 +765,7 @@ Raw-weight FID improves monotonically with more steps, with diminishing returns
 above 100.  EMA weights at 50 steps reduce FID from 55.43 to 24.11 (57\% reduction), a larger gain than increasing from 50 to 200 steps.  The EMA averages
 weight noise that accumulates during training, which is particularly beneficial for
 diffusion models because errors in the reverse chain compound over many steps.
-EMA weights consistently outperform raw weights at the same step count; the largest gain is at 50 steps ($55.43 \to 24.11$), matching the default configuration in Table~\ref{tab:fid}.
+EMA weights consistently outperform raw weights at the same step count; the largest relative gain is at 50 steps ($55.43 \to 24.11$), consistent with the main result in Table~\ref{tab:fid}.
 The 50-step EMA configuration is the default reported throughout this work.
 
 \subsection{VQ-VAE: Codebook Size}
@@ -978,11 +978,11 @@ cleanly separating into cat and dog modes.
 We trained and evaluated three families of generative models on cat images:
 
 \begin{itemize}[noitemsep]
-  \item \textbf{DDPM} achieves the best FID (24.36 with EMA at 50 DDIM steps)
+  \item \textbf{DDPM} achieves the best FID (24.11 with EMA at 50 DDIM steps)
         and the most visually coherent samples.  The 50-step DDIM configuration
         provides a practical speed-quality trade-off ($20\times$ speedup over
         full sampling).  EMA weights are the single most impactful component:
-        they reduce FID by 55\% relative to non-EMA inference at the same
+        they reduce FID by 57\% relative to non-EMA inference at the same
         step count.
   \item \textbf{VQ-VAE + PixelCNN} achieves FID 187.54.  Reconstruction
         quality is good (MSE $= 0.0066$, codebook utilisation 79\%), but the gap
@@ -992,8 +992,10 @@ We trained and evaluated three families of generative models on cat images:
         collapse symptoms despite WGAN-GP regularisation.  Training is the
         fastest ($\sim$2\,h).  Post-hoc analysis suggests that generator
         starvation ($n_c=5$ yielding only 3\,100 G-steps) contributed to the
-        poor result; corrected configurations reduce FID to 98.99 (standard
-        DCGAN, 23\,400 G-steps) and 158.48 (WGAN-GP $n_c=2$, 15\,600 G-steps).
+        poor result; a corrected standard DCGAN (23\,400 G-steps) achieves FID 98.99
+        in a single run; a subsequent 3-seed rerun gives $142.6 \pm 3.4$,
+        indicating that even corrected DCGAN remains seed-sensitive.  A corrected
+        WGAN-GP ($n_c=2$, 15\,600 G-steps) achieves FID 158.48.
 \end{itemize}
 
 These results are consistent with the literature showing that diffusion models
@@ -1030,19 +1032,21 @@ ablation.
 
 \textbf{DDIM timestep schedule.}
 The DDIM sampling implementation uses \texttt{range(0, T, T//S)} reversed,
-producing a grid starting from $t=980$ rather than $t=T{-}1=999$ for $T=1000$,
-$S=50$.  A corrected schedule starting at $t=999$ was evaluated but produced
-substantially higher FID (${\sim}250$ vs.\ ${\sim}55$ for raw weights at $S=50$),
-suggesting the trained checkpoint is sensitive to the starting timestep; the
-original schedule is therefore retained for all reported results.
+producing a strided grid starting from $t=980$ rather than $t=T{-}1=999$ for
+$T=1000$, $S=50$.  An endpoint-inclusive variant starting at $t=999$ was tested
+post-hoc but produced substantially higher FID (${\sim}250$ vs.\ ${\sim}55$ for
+raw weights at $S=50$), indicating that the two discretisations act as different
+sampler variants; the trained checkpoint is evaluated under the same schedule
+used during development, which is the strided grid.  All reported results use
+this schedule consistently.
 \label{sec:limitations}
 
 \textbf{BatchNorm in WGAN-GP critic.}
 The initial discriminator implementation used \texttt{BatchNorm2d}, which mixes
 batch statistics and is incompatible with the per-sample gradient penalty
 computation of WGAN-GP.  This has been corrected to \texttt{InstanceNorm2d}
-(\texttt{affine=True}).  The WGAN-GP FID in Table~\ref{tab:fid} will be updated
-after retraining with the corrected critic.
+(\texttt{affine=True}).  The corrected WGAN-GP ($n_c{=}2$, 200 epochs) achieves
+FID 158.48; see Section~\ref{sec:dcgan_bottleneck} for details.
 
 \textbf{FID reference set.}
 Real reference images for FID were saved once using a sequential DataLoader
@@ -1070,15 +1074,14 @@ now cleared before each run to prevent accumulation from previous evaluations.
 \label{sec:ai}
 
 GitHub Copilot / Claude Sonnet was used as a coding assistant for boilerplate
-generation, debugging PyTorch errors, refactoring, plotting utilities, and
-suggestions for hyperparameter configurations.  AI tools were also used for
-language polishing, LaTeX structuring, and identifying possible methodological
-limitations in the report and presentation. All experiments were run by the
-author; numerical results were obtained from the implemented scripts.
-Architectural choices, final experimental design, interpretation of results,
-and conclusions were reviewed and approved by the author. Suggested
-hyperparameter values were cross-checked against standard settings from the
-cited literature and adjusted to the 6\,GiB VRAM constraint.
+generation, debugging PyTorch errors, refactoring, and plotting utilities.
+AI tools were also used for language polishing and \LaTeX{} structuring.
+All experiments were designed, executed, and verified by the author; numerical
+results were obtained from the implemented scripts.  Architectural choices,
+final experimental design, interpretation of results, and conclusions are the
+author's own.  Suggested hyperparameter values were cross-checked against
+standard settings from the cited literature and adjusted to the
+6\,GiB VRAM constraint (NVIDIA RTX~4050 Laptop GPU).
 
 \section*{Reproducibility}
 
@@ -1093,8 +1096,9 @@ All code is available in the project repository.  To reproduce results:
 \end{enumerate}
 
 Global seed 42 is set via \texttt{src/utils/seed.py}.
-All reported FID values are collected in \texttt{outputs/results\_summary.json}
-for reference.
+All reported FID values are listed in the tables above; the \texttt{outputs/}
+directory is excluded from the repository (large files) but is reproduced by
+running the evaluation scripts.
 
 \bibliographystyle{plain}
 \bibliography{references}

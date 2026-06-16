@@ -116,8 +116,8 @@
       \end{enumerate}
 
       \vspace{6pt}
-      \textbf{Evaluation:} Fréchet Inception Distance (FID) on 5\,000 samples,
-      visual inspection, and latent interpolation.
+      \textbf{Evaluation:} Fréchet Inception Distance (FID) on 5\,000 samples
+      and visual inspection of generated images.
     \end{column}
     \begin{column}{0.35\textwidth}
       \includegraphics[width=\linewidth]{data_samples_64.png}
@@ -172,14 +172,10 @@
         \item Adam $\beta_1=0.5$, lr $= 2\times10^{-4}$
         \item 100 epochs, batch 64
       \end{itemize}
-      \vspace{3pt}
-      \textbf{Note:} WGAN-GP critic outputs a scalar score, not a
-      probability --- binary label targets have no role in this loss.
 
       \vspace{5pt}
-      \textbf{Why WGAN-GP?} Smoother gradients, no weight-clipping issues.
-      $n_\text{critic}=5$ keeps the critic well-calibrated before each
-      generator update.
+      \textbf{Result: FID 221.51} --- as shown later, the main bottleneck
+      was an insufficient number of generator updates.
     \end{column}
     \begin{column}{0.43\textwidth}
       \includegraphics[width=\linewidth]{dcgan/samples_epoch0100.png}
@@ -207,13 +203,14 @@
       \end{itemize}
 
       \vspace{5pt}
-      \textbf{Why EMA codebook?} Prevents codebook collapse.
-      Gradient-based updates are unstable; early run with $K=1024$
-      had only 30\% code utilisation.
+      \textbf{Result: FID 187.54} --- autoencoder reconstructs well
+      (MSE 0.0066), but PixelCNN prior limits sample quality.
+      Early run with $K=1024$ had codebook collapse (30\% utilisation);
+      fixed by switching to EMA updates and $K=512$.
     \end{column}
     \begin{column}{0.43\textwidth}
       \includegraphics[width=\linewidth]{vqvae/prior_samples.png}
-      \centering\footnotesize PixelCNN prior samples
+      \centering\footnotesize PixelCNN prior samples (low visual quality)
     \end{column}
   \end{columns}
 \end{frame}
@@ -236,9 +233,9 @@
       \end{itemize}
 
       \vspace{5pt}
-      \textbf{Why EMA decay 0.9999?} Slower EMA reduces weight noise
-      amplified by the long reverse chain. FID drops from 55.43 (no EMA)
-      to 24.11 (with EMA) at 50 DDIM steps, a 57\% improvement.
+      \textbf{Result: FID 24.11} (EMA weights, 50 DDIM steps) ---
+      best result by a wide margin. EMA alone drops FID 57\%
+      vs.\ non-EMA at the same step count.
     \end{column}
     \begin{column}{0.43\textwidth}
       \includegraphics[width=\linewidth]{ddpm/samples_epoch0200.png}
@@ -305,28 +302,11 @@
   \vspace{1pt}
   \small
   DCGAN: artifacts, limited diversity \quad|\quad
-  VQ-VAE: plausible but blurry \quad|\quad
-  \textbf{DDPM: sharpest, most coherent}
-\end{frame}
-
-\begin{frame}{Real vs.\ Generated}
-  \centering
-  \includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{real_vs_generated.png}
+  VQ-VAE: structure largely indistinguishable \quad|\quad
+  \textbf{DDPM: clearly recognisable cats}
 \end{frame}
 
 
-\begin{frame}[shrink=8]{Latent Space Interpolation: Linear vs.\ Slerp}
-  \centering
-  \includegraphics[width=\textwidth,height=0.28\textheight,keepaspectratio]{dcgan/interpolation_compare.png}\\
-  \small DCGAN --- \textbf{linear} (top) vs.\ slerp (bottom)\\[5pt]
-  \includegraphics[width=\textwidth,height=0.28\textheight,keepaspectratio]{ddpm/interpolation_compare.png}\\
-  \small DDPM --- \textbf{linear} (top) vs.\ slerp (bottom)\\[4pt]
-  \footnotesize\color{mutedtext}
-  Linear interpolation is the primary method (top rows).
-  Slerp is shown for comparison: it preserves the norm of the latent vector,
-  avoiding the low-density region near the origin of $\mathcal{N}(0,I)$
-  that causes blurry midpoints in linear interpolation (most visible in DDPM).
-\end{frame}
 
 \begin{frame}[shrink=8]{VQ-VAE Reconstruction Quality}
   \begin{center}
@@ -452,9 +432,9 @@
       seed variance ($\pm20$) --- suggestive, not conclusive.
 
       \vspace{3pt}
-      \textbf{Qualitative:} mix of cat-like and dog-like samples;
-      no collapse to one class. Model captures shared fur/eye features
-      without cleanly separating species.
+      \textbf{Qualitative:} visual quality poor --- most samples are
+      indistinguishable blobs. Training FID worsened across epochs,
+      suggesting the mixed dataset destabilised the generator.
     \end{column}
     \begin{column}{0.45\textwidth}
       \includegraphics[width=\linewidth]{cats_and_dogs/samples_epoch0100.png}
@@ -505,9 +485,9 @@
     \begin{column}{0.45\textwidth}
       \centering
       \includegraphics[width=\linewidth,height=0.38\textheight,keepaspectratio]{dcgan_fixed_vanilla/samples_epoch0150.png}\\[2pt]
-      \footnotesize Std.\ DCGAN (epoch 150)\\[6pt]
+      \footnotesize Std.\ DCGAN (epoch 150) --- better visual quality\\[6pt]
       \includegraphics[width=\linewidth,height=0.38\textheight,keepaspectratio]{dcgan_fixed_wgangp/samples_epoch0200.png}\\[2pt]
-      \footnotesize WGAN-GP $n_c=2$ (epoch 200)
+      \footnotesize WGAN-GP $n_c=2$ (epoch 200) --- visually worse
     \end{column}
   \end{columns}
 \end{frame}
@@ -610,6 +590,19 @@
 
 
 \appendix
+
+\begin{frame}[shrink=8]{Latent Space Interpolation: Linear vs.\ Slerp}
+  \centering
+  \includegraphics[width=\textwidth,height=0.28\textheight,keepaspectratio]{dcgan/interpolation_compare.png}\\
+  \small DCGAN --- \textbf{linear} (top) vs.\ slerp (bottom)\\[5pt]
+  \includegraphics[width=\textwidth,height=0.28\textheight,keepaspectratio]{ddpm/interpolation_compare.png}\\
+  \small DDPM --- \textbf{linear} (top) vs.\ slerp (bottom)\\[4pt]
+  \footnotesize\color{mutedtext}
+  Linear interpolation is the primary method (top rows).
+  Slerp is shown for comparison: it preserves the norm of the latent vector,
+  avoiding the low-density region near the origin of $\mathcal{N}(0,I)$
+  that causes blurry midpoints in linear interpolation (most visible in DDPM).
+\end{frame}
 
 \begin{frame}[shrink=12]{Training Dynamics}
   \begin{columns}[T]

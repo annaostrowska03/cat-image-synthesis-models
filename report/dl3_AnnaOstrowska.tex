@@ -57,8 +57,7 @@ run (standard DCGAN) and 158.48 (WGAN-GP $n_c=2$).  Ablation studies investigate
 inference steps and EMA weights on DDPM quality, and the sensitivity of DCGAN to
 latent dimension and learning rate.  An exploratory extension trains DCGAN on a
 combined cats-and-dogs dataset, finding a suggestive improvement in cat FID that
-warrants further investigation.  Source code is provided; model checkpoints
-and generated outputs are submitted separately.
+warrants further investigation.  Source code is provided as a zip archive.
 \end{abstract}
 
 \tableofcontents
@@ -445,11 +444,12 @@ reliably qualitative, while smaller differences should not be over-interpreted.
   \label{fig:samples}
 \end{figure}
 
-DDPM samples show the most coherent cat structure with natural fur textures.
-DCGAN samples exhibit some diversity but with noticeable artifacts and
-occasional mode collapse symptoms (similar face structures).  VQ-VAE samples
-are globally plausible but blurrier, which likely reflects limitations of the
-PixelCNN prior rather than the autoencoder itself (see Section~\ref{sec:vqvae_recon}).
+DDPM samples show clearly recognisable cat structure with natural fur textures.
+DCGAN samples contain some structural diversity but are dominated by artifacts
+and low-resolution blobs; individual cats are rarely identifiable.
+VQ-VAE prior samples show largely indistinguishable structure: images lack
+recognisable features, reflecting the limited generative quality of the
+PixelCNN prior (see Section~\ref{sec:vqvae_recon}).
 
 \subsection{Training Dynamics}
 \label{sec:training_curves}
@@ -714,7 +714,9 @@ generator update budget improves FID:
     \includegraphics[width=\linewidth]{dcgan_fixed_wgangp/samples_epoch0200.png}
     \caption{WGAN-GP $n_c=2$ (epoch 200)}
   \end{subfigure}
-  \caption{Samples from corrected DCGAN configurations.}
+  \caption{Samples from corrected DCGAN configurations. Standard DCGAN (left)
+  shows better visual structure; WGAN-GP $n_c{=}2$ (right) achieves lower FID
+  than the original but is visually worse than the standard DCGAN variant.}
   \label{fig:dcgan_fixed}
 \end{figure}
 
@@ -930,20 +932,15 @@ images to measure how well the generated distribution covers each class.
 
 \subsection{Qualitative Assessment}
 
-Inspecting the generated samples (Figure~\ref{fig:cats_dogs_samples}), the model
-produces a mixture of recognisable and ambiguous outputs.  Some images display
-distinctly cat-like features: rounded faces, pointed ears, and compact body
-proportions.  Others show dog-like characteristics: longer snouts, floppy ears,
-and leaner body shapes.  However, a large proportion of samples are visually
-ambiguous -- dark quadruped silhouettes without clearly discernible species
-identity.  We observe no systematic collapse to one class: both cat-like and
-dog-like structures are present throughout the grid.  This suggests the
-unconditional model has learned a blended distribution that captures shared
-low-level animal features (fur texture, eyes, body outline) while sometimes
-failing to commit to either species -- a predictable consequence of training
-without class labels on a mixed dataset.  A classifier-based analysis (e.g.,
-using a pre-trained cat/dog classifier on the generated samples) would be needed
-for a quantitative confirmation of this qualitative observation.
+Inspecting the generated samples (Figure~\ref{fig:cats_dogs_samples}), visual
+quality is generally poor: most images are indistinct blobs without clearly
+recognisable structure.  The training FID curve worsens across epochs rather
+than improving, suggesting that the mixed dataset destabilised the generator
+rather than helping it.  Quantitatively, the cats+dogs model achieves a lower
+FID against cats (206.57 vs.\ 221.51), but given the degree of visual
+degradation and the FID curve trajectory, this numerical improvement should be
+interpreted with caution.  A classifier-based analysis would be needed to
+confirm whether any class-specific structure is present in the generated samples.
 
 \subsection{Quantitative Discussion}
 Training an unconditional generative model on a two-class dataset poses an
